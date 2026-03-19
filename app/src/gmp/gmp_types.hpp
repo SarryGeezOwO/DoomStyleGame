@@ -1,0 +1,50 @@
+#ifndef GZ_GMP_TYPES_HPP
+#define GZ_GMP_TYPES_HPP
+
+#include "util/common_types.hpp"
+#include "resource/resource.hpp"
+#include "renderer/vertex_array.hpp"
+#include "renderer/vertex_buffer.hpp"
+#include "renderer/index_buffer.hpp"
+
+#include <glm/glm.hpp>
+#include <vector>
+#include <array>
+
+namespace Geez
+{
+    using Point_t = std::array<F32, 2>;
+    using Polygon_t = std::vector<Point_t>;
+
+    struct wall_t {
+        U32 id;
+        Point_t point_a;
+        Point_t point_b;
+        bool is_portal;
+        ResourceID texture_id = "Wall";
+
+    friend struct GeezMapData;
+    protected: // Used for buffer generation
+        std::vector<U32> scary_sectors = {};
+    };
+
+    struct sector_t {
+        U32 id;
+        F32 floor_height;                           // Floor...
+        F32 ceil_height;                            // Not relative to the floor_height
+        bool is_hole;                               // Is this sector inside another sector
+        glm::vec2 center = glm::vec2(0);            // Center for the polygon (not accounting for holes)
+        std::vector<U32> walls = {};                // Wall_ids
+        std::vector<Polygon_t> polygons = {{}};     // For Earcut
+        ResourceID texture_id_floor = "Floor";      // Texture for the Floor mesh
+        ResourceID texture_id_ceil  = "Ceil";       // Texture for the ceil mesh
+    };
+
+    struct sector_mesh_t {
+        std::unique_ptr<VertexBuffer> vbo;
+        std::unique_ptr<IndexBuffer> ebo;
+        std::unique_ptr<VertexArray> vao;
+    };
+}
+
+#endif

@@ -1,0 +1,102 @@
+<mxfile host="65bd71144e">
+    <diagram id="nwaokpimeaM18FimOOyM" name="Page-1">
+        <mxGraphModel dx="614" dy="388" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" background="#1A2026" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="6" value="RenderObject_t" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;fontFamily=Lucida Console;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="210" width="110" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="MeshID" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="250" y="230" width="100" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="12" value="MaterialID" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="250" y="242" width="100" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="Transform" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="251" y="254" width="101" height="16" as="geometry"/>
+                </mxCell>
+                <mxCell id="19" value="Renderer" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;fontFamily=Lucida Console;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="80" width="100" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="21" value="MaterialManager*" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="250" y="102" width="100" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="24" value="MeshManager*" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="250" y="114" width="100" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="25" value="Queue&amp;lt;RenderObject_t&amp;gt;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="250" y="136" width="140" height="14" as="geometry"/>
+                </mxCell>
+                <mxCell id="30" style="edgeStyle=none;html=1;entryX=0.55;entryY=0.95;entryDx=0;entryDy=0;entryPerimeter=0;fontColor=#E6E6E6;strokeColor=#E6E6E6;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="26" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="410.5" y="124.39999999999998" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="410" y="155"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="26" value="Submit(RenderObject)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="250" y="148" width="124" height="14" as="geometry"/>
+                </mxCell>
+                <mxCell id="27" value="Flush(Camera&amp;amp;, Light&amp;amp;)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="250" y="160" width="140" height="14" as="geometry"/>
+                </mxCell>
+                <mxCell id="28" value="use std::move" style="ellipse;shape=cloud;whiteSpace=wrap;html=1;fontSize=6;" parent="1" vertex="1">
+                    <mxGeometry x="372" y="104" width="70" height="32" as="geometry"/>
+                </mxCell>
+                <mxCell id="31" value="Material_t" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;fontFamily=Lucida Console;" parent="1" vertex="1">
+                    <mxGeometry x="130" y="300" width="110" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="32" value="ID" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="130" y="320" width="100" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="33" value="Texture_ID" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="130" y="332" width="100" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="34" value="Shader_ID&amp;nbsp;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="130" y="344" width="100" height="16" as="geometry"/>
+                </mxCell>
+                <mxCell id="35" value="ResourceManager*" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="250" y="126" width="100" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="36" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;&lt;font style=&quot;color: rgb(130, 130, 130);&quot;&gt;Resource Manager&lt;/font&gt;&lt;/h1&gt;&lt;div&gt;&lt;font style=&quot;color: rgb(130, 130, 130);&quot;&gt;I Might consider Material as resource at some point, but for now Resources are data that comes from an external sources such as Audio, Textures, Maps, Shaders.&lt;/font&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;fontSize=9;fontColor=#B9B9B9;" parent="1" vertex="1">
+                    <mxGeometry x="74" y="87" width="170" height="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="37" value="Mesh_t" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;fontFamily=Lucida Console;" parent="1" vertex="1">
+                    <mxGeometry x="250" y="300" width="110" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="38" value="ID" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="250" y="320" width="100" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="39" value="VBO*" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="250" y="332" width="100" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="40" value="EBO*" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="250" y="344" width="100" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="41" value="VAO*" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="250" y="356" width="100" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="42" value="IndexCount" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="250" y="368" width="100" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="43" value="DrawMode&amp;nbsp;" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="250" y="380" width="100" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="44" value="Transform" style="rounded=1;whiteSpace=wrap;html=1;fontSize=10;fontFamily=Lucida Console;" parent="1" vertex="1">
+                    <mxGeometry x="370" y="300" width="110" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="45" value="WorldPosition" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="370" y="320" width="100" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="46" value="Rotation" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="370" y="332" width="100" height="12" as="geometry"/>
+                </mxCell>
+                <mxCell id="47" value="Scale" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontColor=#E6E6E6;fontSize=10;spacingTop=1;spacingBottom=0;fontFamily=Courier New;fontStyle=0" parent="1" vertex="1">
+                    <mxGeometry x="370" y="344" width="100" height="12" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

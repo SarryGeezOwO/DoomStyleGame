@@ -1,0 +1,65 @@
+#include "game_object_manager.hpp"
+#include "util/log.hpp"
+#include <glm/glm.hpp>
+
+Geez::GameObject* Geez::GameObjectManager::create(const InstanceID &id)
+{
+    if (m_game_objects.find(id) != m_game_objects.end()) {
+        GZ_LOG(GZ_FAIL, "GameObject [%s] already existed", id.c_str()); 
+        return nullptr;
+    } 
+    std::unique_ptr<GameObject> instance = std::make_unique<GameObject>(id);
+    instance->shader_id = "unlit_texture";
+    instance->texture_id = "DefaultTexture";
+    
+    m_game_objects.insert({id, std::move(instance)});
+    GZ_LOG(GZ_OK, "GameObject Created [%s]", id.c_str());
+    return m_game_objects.at(id).get();
+}
+
+Geez::GameObject *Geez::GameObjectManager::create(const InstanceID &id, const ResourceID &shader)
+{
+    GameObject* obj = create(id);
+    obj->shader_id = shader;
+    return m_game_objects.at(id).get();
+}
+
+Geez::GameObject *Geez::GameObjectManager::create(const InstanceID &id, const ResourceID &shader, const ResourceID &texture)
+{
+    GameObject* obj = create(id);
+    obj->shader_id = shader;
+    obj->texture_id = texture;
+    return m_game_objects.at(id).get();
+}
+
+void Geez::GameObjectManager::destroy(const InstanceID &id)
+{
+    if (m_game_objects.find(id) == m_game_objects.end()) {
+        GZ_LOG(GZ_FAIL, "GameObject [%s] doesn't exist", id.c_str()); 
+        return;
+    } 
+    m_game_objects.erase(id);
+    GZ_LOG(GZ_OK, "GameObject Destroyed [%s]", id.c_str());
+}
+
+void Geez::GameObjectManager::destroy_all()
+{
+    for (auto obj : *this) {
+        destroy(obj->m_id);
+    }
+}
+
+// Returns true if object exists
+bool Geez::GameObjectManager::find(const InstanceID &id)
+{
+    return m_game_objects.find(id) != m_game_objects.end();
+}
+
+Geez::GameObject* Geez::GameObjectManager::get(const InstanceID &id)
+{
+    if (m_game_objects.find(id) == m_game_objects.end()) {
+        GZ_LOG(GZ_FAIL, "GameObject [%s] doesn't exist", id.c_str()); 
+        return nullptr;
+    } 
+    return m_game_objects.at(id).get(); 
+}

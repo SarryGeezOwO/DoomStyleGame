@@ -1,0 +1,34 @@
+IDs are non-negative values (IMPORTANT!!!)
+Singular comments are two forward dash '//'
+no multi line comment
+
+--------------IMPORTANT--------------
+Sectors walls should be continous,
+be it Counter-ClockWise or ClockWise
+-------------------------------------
+
+Order matters:
+Textures -> Points -> Walls -> Sectors -> SectorHoles
+
+Per Texture:
+    >> Texture_id, Name(string) 
+    // ex: 24 "Wall Texture"
+
+Per Point: 
+    >> Point_ID, X, Y
+
+Per Wall:
+    >> Wall_id, Point_A_ID, Point_B_ID, Texture_id, isPortal(0 or 1)
+
+per Sector:
+    >> Sector_id, Wall_Count, Floor, Ceil, isHole, Texture_id(floor), Texture_id(ceil), [Wall_IDs]
+
+per SectorHole:
+    // id to put polygon hole to
+    // you can have multiple SectorHole with the same Sector_id
+    // One of these means one polygon
+
+    // A Sector Hole is required whenever a sector lives 
+    // inside a sector, kinda like a parent child behaivior
+    
+    >> Sector_id, Wall_Count, [Wall_IDs]

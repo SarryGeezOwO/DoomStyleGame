@@ -177,16 +177,6 @@ void update()
         vec2 c = resource->get<GeezMapData>(sample_map)->get_sector(0)->center;
         camera.position = vec3(c.x, 0.1f, c.y);
     }
-    else if (input.check_key(SDLK_F, GZ_TAP)) {
-        const wall_t& wdbg1 = *resource->get<GeezMapData>(sample_map)->get_wall(12);
-        const wall_t& wdbg2 = *resource->get<GeezMapData>(sample_map)->get_wall(13);
-        const wall_t& wdbg3 = *resource->get<GeezMapData>(sample_map)->get_wall(14);
-        const wall_t& wdbg4 = *resource->get<GeezMapData>(sample_map)->get_wall(15);
-        GZ_LOG_FORCE(GZ_DEBUG, "1 SectorA: %d   ---   SectorB: %d", wdbg1.connected_sectors[0], wdbg1.connected_sectors[1]);
-        GZ_LOG_FORCE(GZ_DEBUG, "2 SectorA: %d   ---   SectorB: %d", wdbg2.connected_sectors[0], wdbg2.connected_sectors[1]);
-        GZ_LOG_FORCE(GZ_DEBUG, "3 SectorA: %d   ---   SectorB: %d", wdbg3.connected_sectors[0], wdbg3.connected_sectors[1]);
-        GZ_LOG_FORCE(GZ_DEBUG, "4 SectorA: %d   ---   SectorB: %d", wdbg4.connected_sectors[0], wdbg4.connected_sectors[1]);
-    }
     GeezMapData* map_data = resource->get<GeezMapData>(sample_map);
 
     // Toggle Mouse cursor visibility

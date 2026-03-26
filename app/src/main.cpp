@@ -187,8 +187,6 @@ void update()
     
     // Camera movement
     F32 moveSpd = 1.25f;
-    F32 gravity = 1.25f;
-    F32 cameraHeight = 0.25f;
     glm::vec3 moveDir(0.0f);
     const vec3 camForwardZX = camera.axis_forward() * vec3(1, 0, 1);
 
@@ -213,9 +211,10 @@ void update()
 
     // camera Vertcal collision
     bool isGrounded = false;
+    const F32 gravity = 1.25f;
+    const F32 cameraHeight = 0.25f;
     const F32 gravForce = gravity * delta_time;
-    const F32 heightStepThreshold = 0.15f;
-    const F32 realCameraY = (camera.position.y - cameraHeight);
+    const F32 cameraGroundY = (camera.position.y - cameraHeight);
     vec2 camPosXZ = vec2(camera.position.x, camera.position.z);
     F32 bestFloor = -1000000.0f;
     bool foundSector = false;
@@ -241,9 +240,10 @@ void update()
             }
         }
 
+        // With smooth snapping
         if (foundSector) {
-            if (realCameraY - gravForce <= bestFloor + heightStepThreshold) {
-                camera.position.y = bestFloor + cameraHeight;
+            if (cameraGroundY - gravForce <= bestFloor) {
+                camera.position.y = (bestFloor + cameraHeight);
                 isGrounded = true;
             }
         }
@@ -256,8 +256,9 @@ void update()
     // camera update position
     camera.position += (moveDir * moveSpd * delta_time);
 
-    // Horizontal Collision
-    const F32 camRadius = 0.1f;
+    // ================ Horizontal Collision ================ //
+    const F32 camRadius = 0.05f;
+    const F32 heightStepThreshold = 0.125f;
     camPosXZ.x = camera.position.x;
     camPosXZ.y = camera.position.z;
 
@@ -276,8 +277,8 @@ void update()
                 const F32 bf = map_data->get_sector(wall.connected_sectors[1])->floor_height;
 
                 const F32 sfDiff = max(af, bf) - min(af, bf);
-                if (max(af, bf) < realCameraY)          continue; // Steppng down
-                else if (sfDiff <= heightStepThreshold) continue; // stepping up scenario
+                if (max(af, bf) < cameraGroundY + 0.01f) continue; // Steppng down
+                else if (sfDiff <= heightStepThreshold)  continue; // stepping up scenario
             }
 
             const vec2 p1(wall.point_a[0], wall.point_a[1]);

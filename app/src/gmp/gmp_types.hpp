@@ -22,12 +22,11 @@ namespace Geez
         Point_t point_b;
         bool is_portal;
         ResourceID texture_id = "Wall";
-        std::array<U32, 2> connected_sectors = {};
+        std::array<I32, 2> connected_sectors = {-1, -1};
 
     friend struct GeezMapData;
     protected: // Used for buffer generation
         std::vector<U32> scary_sectors = {};
-        U32 connected_sectors_count = 0; // For map creation, this is bad practice :SKULL:
     };
 
     struct sector_t {

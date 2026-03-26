@@ -177,6 +177,16 @@ void update()
         vec2 c = resource->get<GeezMapData>(sample_map)->get_sector(0)->center;
         camera.position = vec3(c.x, 0.1f, c.y);
     }
+    else if (input.check_key(SDLK_F, GZ_TAP)) {
+        const wall_t& wdbg1 = *resource->get<GeezMapData>(sample_map)->get_wall(12);
+        const wall_t& wdbg2 = *resource->get<GeezMapData>(sample_map)->get_wall(13);
+        const wall_t& wdbg3 = *resource->get<GeezMapData>(sample_map)->get_wall(14);
+        const wall_t& wdbg4 = *resource->get<GeezMapData>(sample_map)->get_wall(15);
+        GZ_LOG_FORCE(GZ_DEBUG, "1 SectorA: %d   ---   SectorB: %d", wdbg1.connected_sectors[0], wdbg1.connected_sectors[1]);
+        GZ_LOG_FORCE(GZ_DEBUG, "2 SectorA: %d   ---   SectorB: %d", wdbg2.connected_sectors[0], wdbg2.connected_sectors[1]);
+        GZ_LOG_FORCE(GZ_DEBUG, "3 SectorA: %d   ---   SectorB: %d", wdbg3.connected_sectors[0], wdbg3.connected_sectors[1]);
+        GZ_LOG_FORCE(GZ_DEBUG, "4 SectorA: %d   ---   SectorB: %d", wdbg4.connected_sectors[0], wdbg4.connected_sectors[1]);
+    }
     GeezMapData* map_data = resource->get<GeezMapData>(sample_map);
 
     // Toggle Mouse cursor visibility
@@ -221,19 +231,10 @@ void update()
 
     {   // =============== Vertical collision SCOPE =============== //
         for (const sector_t& sector : map_data->get_sectors()) {
-            bool isInside    = check_point_inside_polygon(sector.polygons[0], camPosXZ);
+            bool isInside  = is_point_in_sector(camPosXZ, sector);
             if (!isInside) continue;
-            
-            // Skip sector if inside of it's holes
-            for (size_t i = 1; i < sector.polygons.size(); i++) {
-                if (check_point_inside_polygon(sector.polygons[i], camPosXZ)) {
-                    isInside = false;
-                    break;
-                }
-            }
 
             // Get the highest floor sector on your standig point
-            if (!isInside) continue;
             if (sector.floor_height > bestFloor) {
                 bestFloor   = sector.floor_height;
                 foundSector = true;
@@ -244,6 +245,7 @@ void update()
         if (foundSector) {
             if (cameraGroundY - gravForce <= bestFloor) {
                 camera.position.y = (bestFloor + cameraHeight);
+                // camera.position.y = Geez::lerp(camera.position.y, (bestFloor + cameraHeight), delta_time * 15);
                 isGrounded = true;
             }
         }
@@ -263,22 +265,26 @@ void update()
     camPosXZ.y = camera.position.z;
 
     for (const sector_t& sector : map_data->get_sectors()) {
-        bool isCameraInSector = check_point_inside_polygon(sector.polygons[0], camPosXZ);
-        if (!isCameraInSector) continue;
-        
+        bool isCameraInSector = is_point_in_sector(camPosXZ, sector);
+        if (!isCameraInSector) continue; 
+
         for (U32 wid : sector.walls) {
-            const wall_t& wall = *map_data->get_wall(wid);
+            wall_t& wall = *map_data->get_wall(wid);
 
             // Since walls absolutely only contains two sectors as "connected"
             // compare their heights, and only allow pass through when below threshold
             // pass if max floor is less than realCamY
             if (wall.is_portal) {
-                const F32 af = map_data->get_sector(wall.connected_sectors[0])->floor_height;
-                const F32 bf = map_data->get_sector(wall.connected_sectors[1])->floor_height;
+                const sector_t *sa = map_data->get_sector(wall.connected_sectors[0]);
+                const sector_t *sb = map_data->get_sector(wall.connected_sectors[1]);
 
-                const F32 sfDiff = max(af, bf) - min(af, bf);
-                if (max(af, bf) < cameraGroundY + 0.01f) continue; // Steppng down
-                else if (sfDiff <= heightStepThreshold)  continue; // stepping up scenario
+                if (sa && sb) {
+                    const F32 sfDiff = abs(sa->floor_height - sb->floor_height);
+                    if (max(sa->floor_height, sb->floor_height) < cameraGroundY + 0.005f) 
+                        continue; // Steppng down
+                    else if (sfDiff <= heightStepThreshold)
+                        continue; // stepping up scenario
+                }
             }
 
             const vec2 p1(wall.point_a[0], wall.point_a[1]);

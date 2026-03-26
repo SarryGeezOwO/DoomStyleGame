@@ -47,7 +47,24 @@ namespace Geez
      */
     bool check_point_inside_polygon(const Polygon_t& polygon, const glm::vec2& p);
 
+    /**
+     * @brief Find the closest point on a line segment to a given point.
+     *
+     * @param a glm::vec2: First endpoint of the segment.
+     * @param b glm::vec2: Second endpoint of the segment.
+     * @param p glm::vec2: The point to find the closest point to.
+     * @return glm::vec2 The closest point on the segment to p.
+     */
     glm::vec2 closest_point_on_segment(const glm::vec2& a, const glm::vec2& b, const glm::vec2& p);
+
+    /**
+     * @brief Check if a point is inside a sector.
+     *
+     * @param posXZ vec2: The position in the XZ plane.
+     * @param sector sector_t: The sector to check against.
+     * @return bool True if the point is inside the sector.
+     */
+    bool is_point_in_sector(const glm::vec2& posXZ, const sector_t& sector);
 }
 
 #endif

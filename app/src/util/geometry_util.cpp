@@ -116,4 +116,18 @@ namespace Geez
         t = glm::clamp(t, 0.0f, 1.0f);
         return a + ab * t;
     }
+
+    bool is_point_in_sector(const glm::vec2& posXZ, const sector_t& sector) {
+        bool isInside   = check_point_inside_polygon(sector.polygons[0], posXZ);
+        if (!isInside)  return false;
+        
+        // Skip sector if inside of it's holes
+        for (size_t i = 1; i < sector.polygons.size(); i++) {
+            if (check_point_inside_polygon(sector.polygons[i], posXZ)) {
+                isInside = false;
+                break;
+            }
+        }
+        return isInside;
+    }
 }

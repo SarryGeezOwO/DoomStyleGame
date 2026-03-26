@@ -113,10 +113,6 @@ Geez::GeezMapData::GeezMapData(const std::string &file)
 
             for (U32 i = 0; i < wall_count; i++){
                 U32 wall_id = static_cast<U32>(values[i+7]);
-                wall_t* w = get_wall(wall_id);
-                if (w->connected_sectors_count < 2) {
-                    w->connected_sectors[w->connected_sectors_count++] = id;
-                }
                 sector.walls.push_back(wall_id);
             }
             sectors.push_back(sector);
@@ -159,6 +155,25 @@ Geez::GeezMapData::GeezMapData(const std::string &file)
 
                 sector.polygons.push_back(polygon_hole);
                 break;
+            }
+        }
+    }
+
+    // Add wall sector connections
+    std::unordered_map<U32, U32> portal_prev_sec;
+    for (const sector_t& sector : sectors) { 
+        for (const U32 wall_id : sector.walls) {
+            wall_t *wall = get_wall(wall_id);
+
+            auto it = portal_prev_sec.find(wall_id);
+            if (it != portal_prev_sec.end()) {
+                // Two sectors acknowledges this wall existance, IDK what im cooking
+                wall->connected_sectors[0] = it->second;
+                wall->connected_sectors[1] = sector.id;
+            }
+            else {
+                // First sector to mention this edge
+                portal_prev_sec.insert({wall_id, sector.id});
             }
         }
     }

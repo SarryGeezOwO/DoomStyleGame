@@ -13,8 +13,8 @@ using namespace glm;
 namespace Geez
 {
     // Errmm, my mind is currently fried...
-    static void bind(const RenderContext &context, const mat4 model, 
-        const ResourceID& shader_id, const ResourceID& texture_id, bool isFliped, vec2 uv_scale) 
+    static void bind(const RenderContext &context, const mat4& model,
+        const ResourceID& shader_id, const ResourceID& texture_id, bool isFliped, const vec2& uv_scale) 
     {
         // Pass in nullptr on texture for no texture duh...
         Shader*  shader  = context.resources->get<Shader>(shader_id);
@@ -31,17 +31,9 @@ namespace Geez
                 .set_uniform<mat4>("u_view",  context.active_camera->view_matrix())
                 .set_uniform<mat4>("u_model", model);
 
-            if (shader->has_uniform("u_texture")) {
-                shader->set_uniform<I32>("u_texture", 0);
-            }
-
-            if (shader->has_uniform("u_uv_scale")) {
-                shader->set_uniform<vec2>("u_uv_scale", uv_scale);
-            }
-
-            if (shader->has_uniform("u_normalFlip")) {
-                shader->set_uniform<F32>("u_normalFlip", (isFliped ? -1.0f : 1.0f));
-            }
+            if (shader->has_uniform("u_texture"))    shader->set_uniform<I32>("u_texture", 0);
+            if (shader->has_uniform("u_uv_scale"))   shader->set_uniform<vec2>("u_uv_scale", uv_scale);
+            if (shader->has_uniform("u_normalFlip")) shader->set_uniform<F32>("u_normalFlip", (isFliped ? -1.0f : 1.0f));
         }
     }
 }
@@ -72,7 +64,14 @@ void Geez::RenderWallStrategy::execute(IRenderData &data, const RenderContext &c
          model =  rotate(model, -angle, vec3(0,1,0));
          model =  scale(model, vec3(mag, height, 1.0f));
 
-    bind(context, model, wall.shader_id, wall.texture_id, (facing < 0.0f), vec2(mag, height));
+    bind(
+        context, 
+        model,
+        wall.shader_id, 
+        wall.texture_id, 
+        (facing < 0.0f), 
+        vec2(mag, height)
+    );
     GL(glDrawElements(mesh->draw_mode, mesh->index_count(), GL_UNSIGNED_INT, nullptr));
     context.meshes->unbind();
 
@@ -102,13 +101,27 @@ void Geez::RenderSectorStrategy::execute(IRenderData &data, const RenderContext 
     // Floor Mesh
     mat4 flor_model = mat4(1.0f);
     flor_model = translate(flor_model, vec3(0, sector.floor, 0));
-    bind(context, flor_model, sector.shader_id, sector.texture_id_flor, false, vec2(1));
+    bind(
+        context, 
+        flor_model,
+        sector.shader_id, 
+        sector.texture_id_flor, 
+        false, 
+        vec2(1)
+    );
     GL(glDrawElements(GL_TRIANGLES, sector.index_count, GL_UNSIGNED_INT, nullptr));
     
     // Ceil Mesh
     mat4 ceil_model = mat4(1.0f);
     ceil_model = translate(ceil_model, vec3(0, sector.ceil, 0));
-    bind(context, ceil_model, sector.shader_id, sector.texture_id_ceil, true, vec2(1));
+    bind(
+        context, 
+        ceil_model, 
+        sector.shader_id, 
+        sector.texture_id_ceil, 
+        true, 
+        vec2(1)
+    );
     GL(glDrawElements(GL_TRIANGLES, sector.index_count, GL_UNSIGNED_INT, nullptr));
 
     context.meshes->unbind();

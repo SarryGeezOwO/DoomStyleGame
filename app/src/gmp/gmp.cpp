@@ -113,6 +113,10 @@ Geez::GeezMapData::GeezMapData(const std::string &file)
 
             for (U32 i = 0; i < wall_count; i++){
                 U32 wall_id = static_cast<U32>(values[i+7]);
+                wall_t* w = get_wall(wall_id);
+                if (w->connected_sectors_count < 2) {
+                    w->connected_sectors[w->connected_sectors_count++] = id;
+                }
                 sector.walls.push_back(wall_id);
             }
             sectors.push_back(sector);

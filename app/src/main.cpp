@@ -213,42 +213,44 @@ void update()
 
     // camera Vertcal collision
     bool isGrounded = false;
-    F32 gravForce = gravity * delta_time;
-    F32 heightStepThreshold = 0.2f;
-
-    // Check cam y-position is lower than it's floor_height, apply gravity if not
+    const F32 gravForce = gravity * delta_time;
+    const F32 heightStepThreshold = 0.15f;
     const F32 realCameraY = (camera.position.y - cameraHeight);
-    for (const sector_t& sector : map_data->get_sectors()) {
-        const F32& floor = sector.floor_height;
-        if (realCameraY - gravForce < floor) {
+    vec2 camPosXZ = vec2(camera.position.x, camera.position.z);
+    F32 bestFloor = -1000000.0f;
+    bool foundSector = false;
 
-            bool isCameraInSector = check_point_inside_polygon(sector.polygons[0], vec2(camera.position.x, camera.position.z));
-            if (!isCameraInSector) {
-                continue;
-            }
+    {   // =============== Vertical collision SCOPE =============== //
+        for (const sector_t& sector : map_data->get_sectors()) {
+            bool isInside    = check_point_inside_polygon(sector.polygons[0], camPosXZ);
+            if (!isInside) continue;
             
+            // Skip sector if inside of it's holes
             for (size_t i = 1; i < sector.polygons.size(); i++) {
-                auto& polygon_hole = sector.polygons[i];
-
-                // As long as one Hole contains this position, that's a no, no
-                if (check_point_inside_polygon(polygon_hole, vec2(camera.position.x, camera.position.z))) {
-                    isCameraInSector = false;
+                if (check_point_inside_polygon(sector.polygons[i], camPosXZ)) {
+                    isInside = false;
                     break;
                 }
             }
 
-            // Only proceed on placing the camera on the sector's floor
-            // when not standng on one of this sector's hole and not surpassing the threshold
-            if (isCameraInSector && distance(realCameraY, floor) <= heightStepThreshold) {
-                camera.position.y = floor + cameraHeight;
-                isGrounded = true;
-                break;
+            // Get the highest floor sector on your standig point
+            if (!isInside) continue;
+            if (sector.floor_height > bestFloor) {
+                bestFloor   = sector.floor_height;
+                foundSector = true;
             }
         }
-    }
 
-    if (!isGrounded) {
-        camera.position.y -= gravForce;
+        if (foundSector) {
+            if (realCameraY - gravForce <= bestFloor + heightStepThreshold) {
+                camera.position.y = bestFloor + cameraHeight;
+                isGrounded = true;
+            }
+        }
+    
+        if (!isGrounded) {
+            camera.position.y -= gravForce;
+        }
     }
 
     // camera update position
@@ -256,16 +258,26 @@ void update()
 
     // Horizontal Collision
     const F32 camRadius = 0.1f;
-    const vec2 camPosXZ(camera.position.x, camera.position.z);
+    camPosXZ.x = camera.position.x;
+    camPosXZ.y = camera.position.z;
 
     for (const sector_t& sector : map_data->get_sectors()) {
-        bool isCameraInSector = check_point_inside_polygon(sector.polygons[0], vec2(camera.position.x, camera.position.z));
+        bool isCameraInSector = check_point_inside_polygon(sector.polygons[0], camPosXZ);
         if (!isCameraInSector) continue;
         
         for (U32 wid : sector.walls) {
             const wall_t& wall = *map_data->get_wall(wid);
+
+            // Since walls absolutely only contains two sectors as "connected"
+            // compare their heights, and only allow pass through when below threshold
+            // pass if max floor is less than realCamY
             if (wall.is_portal) {
-                //continue;
+                const F32 af = map_data->get_sector(wall.connected_sectors[0])->floor_height;
+                const F32 bf = map_data->get_sector(wall.connected_sectors[1])->floor_height;
+
+                const F32 sfDiff = max(af, bf) - min(af, bf);
+                if (max(af, bf) < realCameraY)          continue; // Steppng down
+                else if (sfDiff <= heightStepThreshold) continue; // stepping up scenario
             }
 
             const vec2 p1(wall.point_a[0], wall.point_a[1]);
@@ -385,4 +397,5 @@ int main()
 
     onQuit();
     return 0;
+    
 }

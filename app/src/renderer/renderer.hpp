@@ -13,7 +13,7 @@
 #include "util/common_types.hpp"
 
 #include <glm/glm.hpp>
-#include <queue>
+#include <vector>
 #include <memory>
 
 namespace Geez
@@ -33,8 +33,8 @@ namespace Geez
     struct Renderer
     {
     private:
-        std::queue<std::unique_ptr<IRenderData>> render_queue;
-        std::unique_ptr<IRenderStrategy> strategies[2];
+        std::vector<std::unique_ptr<IRenderData>> render_list;
+        std::unique_ptr<IRenderStrategy> strategies[GZ_RENDER_TYPES_COUNT];
         std::unique_ptr<RenderContext> context;
 
     public:

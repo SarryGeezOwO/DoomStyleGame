@@ -12,11 +12,19 @@ namespace Geez
         virtual ~IRenderStrategy() = default;
     };
 
-    struct RenderWallStrategy : public IRenderStrategy {
+    struct RenderStrategyWall : public IRenderStrategy {
         void execute(IRenderData& data, const RenderContext& context) override;
     };
 
-    struct RenderSectorStrategy : public IRenderStrategy {
+    struct RenderStrategySector : public IRenderStrategy {
+        void execute(IRenderData& data, const RenderContext& context) override;
+    };
+
+    struct RenderStrategyGameobject : public IRenderStrategy {
+        void execute(IRenderData& data, const RenderContext& context) override;
+    };
+
+    struct RenderStrategyGUI : public IRenderStrategy {
         void execute(IRenderData& data, const RenderContext& context) override;
     };
 }

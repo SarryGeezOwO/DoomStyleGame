@@ -149,9 +149,7 @@ void start()
     camera.position = vec3(c.x, 0.1f, c.y);
 }
 
-void update()
-{   
-    // Change Map
+void logic_map_change() {
     if (input.check_key(SDLK_1, GZ_TAP)) {
         sample_map = "sample";
         vec2 c = resource->get<GeezMapData>(sample_map)->get_sector(0)->center;
@@ -177,14 +175,9 @@ void update()
         vec2 c = resource->get<GeezMapData>(sample_map)->get_sector(0)->center;
         camera.position = vec3(c.x, 0.1f, c.y);
     }
-    GeezMapData* map_data = resource->get<GeezMapData>(sample_map);
+}
 
-    // Toggle Mouse cursor visibility
-    if (input.check_key(SDLK_ESCAPE, GZ_TAP)) {
-        window->toggle_cursor_visible();
-        GZ_LOG(GZ_DEBUG, "Cursor Visibility Toggled");
-    }
-    
+void logic_character_controller(GeezMapData* map) {
     // Camera movement
     F32 moveSpd = 1.25f;
     glm::vec3 moveDir(0.0f);
@@ -220,7 +213,7 @@ void update()
     bool foundSector = false;
 
     {   // =============== Vertical collision SCOPE =============== //
-        for (const sector_t& sector : map_data->get_sectors()) {
+        for (const sector_t& sector : map->get_sectors()) {
             bool isInside  = is_point_in_sector(camPosXZ, sector);
             if (!isInside) continue;
 
@@ -254,19 +247,19 @@ void update()
     camPosXZ.x = camera.position.x;
     camPosXZ.y = camera.position.z;
 
-    for (const sector_t& sector : map_data->get_sectors()) {
+    for (const sector_t& sector : map->get_sectors()) {
         bool isCameraInSector = is_point_in_sector(camPosXZ, sector);
         if (!isCameraInSector) continue; 
 
         for (U32 wid : sector.walls) {
-            wall_t& wall = *map_data->get_wall(wid);
+            wall_t& wall = *map->get_wall(wid);
 
             // Since walls absolutely only contains two sectors as "connected"
             // compare their heights, and only allow pass through when below threshold
             // pass if max floor is less than realCamY
             if (wall.is_portal) {
-                const sector_t *sa = map_data->get_sector(wall.connected_sectors[0]);
-                const sector_t *sb = map_data->get_sector(wall.connected_sectors[1]);
+                const sector_t *sa = map->get_sector(wall.connected_sectors[0]);
+                const sector_t *sb = map->get_sector(wall.connected_sectors[1]);
 
                 if (sa && sb) {
                     const F32 sfDiff = abs(sa->floor_height - sb->floor_height);
@@ -292,6 +285,21 @@ void update()
             }
         }   
     }
+}
+
+void update()
+{   
+    // Change Map
+    logic_map_change();
+    GeezMapData* map_data = resource->get<GeezMapData>(sample_map);
+
+    // Toggle Mouse cursor visibility
+    if (input.check_key(SDLK_ESCAPE, GZ_TAP)) {
+        window->toggle_cursor_visible();
+        GZ_LOG(GZ_DEBUG, "Cursor Visibility Toggled");
+    }
+
+    logic_character_controller(map_data);
 
     // Light movement (arrow keys)
     const F32 lightSpd = 1.25f * delta_time;
@@ -307,23 +315,25 @@ void update()
     // Move sun gameobject to actual lightPosition
     entities->get("LightSource")->position = light_pos;
 
-    // Example of moving a sector by floor height
-    // Left mouse means a positive addition
-    // Moving a floor will not move it's height
-    F32 add = 0.5f;
-    if (input.check_key(SDLK_LSHIFT, GZ_HOLD)) {
-        map_data->get_sector(1)->ceil_height += (
-            (input.check_mouse_left(GZ_HOLD) - input.check_mouse_right(GZ_HOLD)) * add
-        ) * delta_time;
-    }
-    else {
-        map_data->get_sector(1)->floor_height += (
-            (input.check_mouse_left(GZ_HOLD) - input.check_mouse_right(GZ_HOLD)) * add
-        ) * delta_time;
-    }
+    {   // ============= TEMP ============= //
+        // Example of moving a sector by floor height
+        // Left mouse means a positive addition
+        // Moving a floor will not move it's height
+        F32 add = 0.5f;
+        if (input.check_key(SDLK_LSHIFT, GZ_HOLD)) {
+            map_data->get_sector(1)->ceil_height += (
+                (input.check_mouse_left(GZ_HOLD) - input.check_mouse_right(GZ_HOLD)) * add
+            ) * delta_time;
+        }
+        else {
+            map_data->get_sector(1)->floor_height += (
+                (input.check_mouse_left(GZ_HOLD) - input.check_mouse_right(GZ_HOLD)) * add
+            ) * delta_time;
+        }
 
-    if (input.check_key(SDLK_SPACE, GZ_TAP)) {
-        audio->play(resource->get<Audio>("syfm"));
+        if (input.check_key(SDLK_SPACE, GZ_TAP)) {
+            audio->play(resource->get<Audio>("syfm"));
+        }
     }
 }
 

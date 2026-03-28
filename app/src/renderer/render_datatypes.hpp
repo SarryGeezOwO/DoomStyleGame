@@ -14,12 +14,17 @@
     Leave Texture_ID empty if no texture to use or whatever...
 */
 
+// Not including R_NONE
+#define GZ_RENDER_TYPES_COUNT 4
+
 namespace Geez
 {
     enum RenderType {
         R_NONE = -1,    // Skipped at rendering
         R_WALL, 
-        R_SECTOR
+        R_SECTOR,
+        R_GAMEOBJECT,
+        R_GUI           // Not including Texts
     };
 
     // pure Virtual
@@ -37,8 +42,8 @@ namespace Geez
 //                   SPECIFIC DATA                   //
 // ================================================= //
 
-    struct RenderWallData_t   : IRenderData {
-        RenderWallData_t() { type = R_WALL; }
+    struct RenderDataWall_t   : IRenderData {
+        RenderDataWall_t() { type = R_WALL; }
 
         glm::vec2 a; 
         glm::vec2 b;
@@ -50,8 +55,8 @@ namespace Geez
         ResourceID texture_id   = "";
     };
 
-    struct RenderSectorData_t : IRenderData {
-        RenderSectorData_t() { type = R_SECTOR; }
+    struct RenderDataSector_t : IRenderData {
+        RenderDataSector_t() { type = R_SECTOR; }
         
         U32 index_count;
         F32 floor;
@@ -59,6 +64,14 @@ namespace Geez
         std::weak_ptr<sector_mesh_t> mesh;
         ResourceID texture_id_flor = "";
         ResourceID texture_id_ceil = "";
+    };
+
+    struct RenderDataGameobject_t : IRenderData {
+        RenderDataGameobject_t() { type = R_GAMEOBJECT; }
+    };
+
+    struct RenderDataGUI_t : IRenderData {
+        RenderDataGUI_t() { type = R_GUI; }
     };
 }
 

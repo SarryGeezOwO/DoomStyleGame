@@ -38,9 +38,9 @@ namespace Geez
     }
 }
 
-void Geez::RenderWallStrategy::execute(IRenderData &data, const RenderContext &context)
+void Geez::RenderStrategyWall::execute(IRenderData &data, const RenderContext &context)
 {
-    RenderWallData_t& wall = static_cast<RenderWallData_t&>(data);
+    RenderDataWall_t& wall = static_cast<RenderDataWall_t&>(data);
     if (!context.meshes->exists("QUAD")) {
         GZ_LOG_FORCE(GZ_FAIL, "Cannot draw wall, no quad mesh available.");
         return;
@@ -82,9 +82,9 @@ void Geez::RenderWallStrategy::execute(IRenderData &data, const RenderContext &c
     }
 }
 
-void Geez::RenderSectorStrategy::execute(IRenderData &data, const RenderContext &context)
+void Geez::RenderStrategySector::execute(IRenderData &data, const RenderContext &context)
 {
-    RenderSectorData_t& sector = static_cast<RenderSectorData_t&>(data);
+    RenderDataSector_t& sector = static_cast<RenderDataSector_t&>(data);
     if (sector.mesh.expired()) {
         GZ_LOG_FORCE(GZ_FAIL, "[RENDERER] Cannot render sector, pointer expired.");
         return; 
@@ -125,4 +125,14 @@ void Geez::RenderSectorStrategy::execute(IRenderData &data, const RenderContext 
     GL(glDrawElements(GL_TRIANGLES, sector.index_count, GL_UNSIGNED_INT, nullptr));
 
     context.meshes->unbind();
+}
+
+void Geez::RenderStrategyGameobject::execute(IRenderData &data, const RenderContext &context)
+{
+
+}
+
+void Geez::RenderStrategyGUI::execute(IRenderData &data, const RenderContext &context)
+{
+
 }

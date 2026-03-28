@@ -47,8 +47,10 @@ bool Geez::RenderContext::validate() const
 Geez::Renderer::Renderer()
 {
     // Load Strategies here
-    strategies[R_WALL]       = std::make_unique<RenderWallStrategy>();
-    strategies[R_SECTOR]     = std::make_unique<RenderSectorStrategy>();
+    strategies[R_WALL]       = std::make_unique<RenderStrategyWall>();
+    strategies[R_SECTOR]     = std::make_unique<RenderStrategySector>();
+    strategies[R_GAMEOBJECT] = std::make_unique<RenderStrategyGameobject>();
+    strategies[R_GUI]        = std::make_unique<RenderStrategyGUI>();
 }
 
 Geez::Renderer::~Renderer()
@@ -68,7 +70,7 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
             const vec2 point_a = {wall.point_a[0], wall.point_a[1]};
             const vec2 point_b = {wall.point_b[0], wall.point_b[1]};
 
-            RenderWallData_t wall_data;
+            RenderDataWall_t wall_data;
             wall_data.debug_line    = true;
             wall_data.flipped       = false;
             wall_data.shader_id     = lit_shader;
@@ -81,7 +83,7 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
             if (!wall.is_portal) {
                 wall_data.yBottom = sector.floor_height;
                 wall_data.yTop = sector.ceil_height;
-                submit(std::make_unique<RenderWallData_t>(wall_data));
+                submit(std::make_unique<RenderDataWall_t>(wall_data));
                 continue;
             }
 
@@ -109,7 +111,7 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
                 if (max_floor >= min_ceil) {
                     wall_data.yBottom = min_floor;
                     wall_data.yTop = max_ceil;
-                    submit(std::make_unique<RenderWallData_t>(wall_data));
+                    submit(std::make_unique<RenderDataWall_t>(wall_data));
                     continue;
                 }
 
@@ -123,7 +125,7 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
                         :
                         (max_floor == prev_sec.floor_height);
                 }
-                submit(std::make_unique<RenderWallData_t>(wall_data));
+                submit(std::make_unique<RenderDataWall_t>(wall_data));
                 
                 // Ceil Wall
                 wall_data.yBottom    = min_ceil;
@@ -135,7 +137,7 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
                         :
                         (min_ceil == prev_sec.ceil_height);
                 }
-                submit(std::make_unique<RenderWallData_t>(wall_data));
+                submit(std::make_unique<RenderDataWall_t>(wall_data));
                 
             }
             else {
@@ -145,7 +147,7 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
         }
 
         // Render Floor and Ceil, Floor and ceils are guranteed to be opaque objects
-        RenderSectorData_t r_sector;
+        RenderDataSector_t r_sector;
         r_sector.texture_id_flor = sector.texture_id_floor;
         r_sector.texture_id_ceil = sector.texture_id_ceil;
         r_sector.shader_id  = lit_shader;
@@ -153,7 +155,7 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
         r_sector.ceil  = sector.ceil_height;
         r_sector.mesh  = map.get_weak_sector_mesh(sector.id);
         r_sector.index_count = map.get_sector_mesh(sector.id)->ebo->count();
-        submit(std::make_unique<RenderSectorData_t>(r_sector));
+        submit(std::make_unique<RenderDataSector_t>(r_sector));
         
         // Don't ask why this debug_line is in here
         // as opposed to being in render_strategy.cpp
@@ -165,7 +167,7 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
 
 void Geez::Renderer::submit(std::unique_ptr<IRenderData> data)
 {
-    render_queue.push(std::move(data));
+    render_list.push_back(std::move(data));
 }
 
 void Geez::Renderer::flush()
@@ -174,20 +176,30 @@ void Geez::Renderer::flush()
         return;
     }
 
-    // Map rendering or something
-    while (!render_queue.empty()) 
+    // Map rendering or something sorted by Render Category
+    // Wall -> Sector -> -> GameObject -> GUI
+    std::sort(render_list.begin(), render_list.end(), [](const auto& a, const auto& b) 
+    { return a->type < b->type; });
+
+    for (const auto& data_ptr : render_list) 
     {   
-        IRenderData& data = *render_queue.front().get();
-        RenderType type   = data.type;
-        
+        IRenderData* data       = data_ptr.get();
+        const RenderType type   = data->type;
+
         if (type == R_NONE) {
-            render_queue.pop();
             continue;
         }
-
-        strategies[type]->execute(data, *context.get());
-        render_queue.pop();
+        
+        strategies[type]->execute(*data, *context.get());
     }
+    render_list.clear();
+
+    /*
+        TODO:
+            Migrate gameobject rendering to main.cpp and by 
+            RenderStrategy, Also Crosshair, so we can actually fucking start 
+            doing gameplay.
+    */
 
     // Gameobjects
     if (!context->meshes->exists("QUAD")) {
@@ -222,6 +234,7 @@ void Geez::Renderer::flush()
         }
         GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr)); // Magic 6
     }
+
     context->meshes->unbind();
     SDL_GL_SwapWindow(context->active_window->handle());
 }

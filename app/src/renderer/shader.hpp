@@ -56,6 +56,14 @@ namespace Geez
     // ==================== set_uniform ============================
 
     template<>
+    inline Shader& Shader::set_uniform<bool>(const std::string& name, const bool& value)
+    {
+        U32 location = get_uniform(name);
+        GL(glUniform1f(location, value));
+        return *this;
+    }
+
+    template<>
     inline Shader& Shader::set_uniform<float>(const std::string& name, const F32& value)
     {
         U32 location = get_uniform(name);

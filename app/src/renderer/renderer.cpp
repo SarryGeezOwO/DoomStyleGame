@@ -226,7 +226,8 @@ void Geez::Renderer::flush()
                 .set_uniform<mat4>("u_proj",  context->active_camera->projection_matrix())
                 .set_uniform<mat4>("u_view",  context->active_camera->view_matrix())
                 .set_uniform<mat4>("u_model", model)
-                .set_uniform<vec2>("u_uv_scale", vec2(1));
+                .set_uniform<vec2>("u_uv_scale", vec2(1))
+                .set_uniform<vec2>("u_uv_offset", vec2(0));
 
             if (shader->has_uniform("u_normalFlip")) {
                 shader->set_uniform<F32>("u_normalFlip", 1.0f);

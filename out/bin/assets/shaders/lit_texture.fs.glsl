@@ -16,6 +16,7 @@ in vec2 v_texCoord;
 in vec3 v_normal;
 in vec3 v_fragPos;
 
+uniform bool u_use_world_uv;
 uniform vec2 u_uv_scale;
 uniform vec3 u_view_pos;
 uniform sampler2D u_texture;
@@ -23,10 +24,24 @@ uniform Light u_light;
 
 void main() {
  
-    vec3 texColor = vec3(texture(u_texture, v_texCoord * u_uv_scale));
+    vec2 uv;
+    vec3 norm = normalize(v_normal);
+    if (u_use_world_uv) {
+        if (abs(norm.y) > 0.5)
+            uv = v_fragPos.xz;
+        else if (abs(norm.x) > abs(norm.z))
+            uv = v_fragPos.zy;
+        else
+            uv = v_fragPos.xy;
+    }
+    else {
+        uv = v_texCoord;
+    }
+
+    vec3 texColor = vec3(texture(u_texture, uv * u_uv_scale));
 
     // Ambient
-    float alpha = texture2D(u_texture, v_texCoord * u_uv_scale).a;
+    float alpha = texture2D(u_texture, uv * u_uv_scale).a;
     if (alpha <= 0.01f) {
         discard;
     }
@@ -36,7 +51,6 @@ void main() {
     // Darkness simulation
 
     // Diffuse
-    vec3 norm = normalize(v_normal);
     vec3 light_dir = normalize(u_light.position - v_fragPos);
     float diff = max(dot(norm, light_dir), 0.0);
     vec3 diffuse = u_light.diffuse * diff * texColor; 

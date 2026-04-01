@@ -14,7 +14,7 @@ namespace Geez
 {
     // Errmm, my mind is currently fried...
     static void bind(const RenderContext &context, const mat4& model,
-        const ResourceID& shader_id, const ResourceID& texture_id, bool isFliped, const vec2& uv_scale) 
+        const ResourceID& shader_id, const ResourceID& texture_id, bool isFliped, bool use_uv_world, const vec2& uv_scale = vec2(1))
     {
         // Pass in nullptr on texture for no texture duh...
         Shader*  shader  = context.resources->get<Shader>(shader_id);
@@ -31,32 +31,33 @@ namespace Geez
                 .set_uniform<mat4>("u_view",  context.active_camera->view_matrix())
                 .set_uniform<mat4>("u_model", model);
 
-            if (shader->has_uniform("u_texture"))    shader->set_uniform<I32>("u_texture", 0);
-            if (shader->has_uniform("u_uv_scale"))   shader->set_uniform<vec2>("u_uv_scale", uv_scale);
-            if (shader->has_uniform("u_normalFlip")) shader->set_uniform<F32>("u_normalFlip", (isFliped ? -1.0f : 1.0f));
+            if (shader->has_uniform("u_texture"))     shader->set_uniform<I32>("u_texture", 0);
+            if (shader->has_uniform("u_uv_scale"))    shader->set_uniform<vec2>("u_uv_scale", uv_scale);
+            if (shader->has_uniform("u_use_world_uv"))shader->set_uniform<bool>("u_use_world_uv", use_uv_world);
+            if (shader->has_uniform("u_normalFlip"))  shader->set_uniform<F32>("u_normalFlip", (isFliped ? -1.0f : 1.0f));
         }
     }
 }
 
 void Geez::RenderStrategyWall::execute(IRenderData &data, const RenderContext &context)
 {
-    RenderDataWall_t& wall = static_cast<RenderDataWall_t&>(data);
+    const RenderDataWall_t& wall = static_cast<RenderDataWall_t&>(data);
     if (!context.meshes->exists("QUAD")) {
         GZ_LOG_FORCE(GZ_FAIL, "Cannot draw wall, no quad mesh available.");
         return;
     }
 
     Mesh* mesh = context.meshes->get("QUAD");
-    vec2 v = wall.b - wall.a;
-    vec2 dir  = normalize(v);
-    vec2 mid  = wall.a + (v * 0.5f);
-    vec2 norm = vec2(-dir.y, dir.x) * (wall.flipped ? -1.0f : 1.0f);
-    vec2 to_center = normalize(wall.ref_center - mid);
+    const vec2 v = wall.b - wall.a;
+    const vec2 dir  = normalize(v);
+    const vec2 mid  = wall.a + (v * 0.5f);
+    const vec2 norm = vec2(-dir.y, dir.x) * (wall.flipped ? -1.0f : 1.0f);
+    const vec2 to_center = normalize(wall.ref_center - mid);
     
-    F32 mag    = abs(length(v));
-    F32 angle  = SDL_atan2f(dir.y, dir.x);
-    F32 facing = dot(norm, to_center);
-    F32 height = abs(wall.yBottom - wall.yTop);
+    const F32 mag    = abs(length(v));
+    const F32 angle  = SDL_atan2f(dir.y, dir.x);
+    const F32 facing = dot(norm, to_center);
+    const F32 height = abs(wall.yBottom - wall.yTop);
 
     mesh->bind();
     mat4 model =  mat4(1.0f);
@@ -69,22 +70,23 @@ void Geez::RenderStrategyWall::execute(IRenderData &data, const RenderContext &c
         model,
         wall.shader_id, 
         wall.texture_id, 
-        (facing < 0.0f), 
-        vec2(mag, height)
+        (facing < 0.0f),
+        true,
+        vec2(1.5)
     );
     GL(glDrawElements(mesh->draw_mode, mesh->index_count(), GL_UNSIGNED_INT, nullptr));
     context.meshes->unbind();
 
     if (wall.debug_line) {
-        vec3 line_center = vec3(mid.x, wall.yBottom + (height*0.5f), mid.y);
-        vec3 line_dir = vec3(dir.y * -sign(facing), 0, dir.x * sign(facing));
+        const vec3 line_center = vec3(mid.x, wall.yBottom + (height*0.5f), mid.y);
+        const vec3 line_dir = vec3(dir.y * -sign(facing), 0, dir.x * sign(facing));
         GZ_DEBUG_DRAW_RAY(context, line_center, line_dir, 0.075f, 3, Color3f(1,1,0));
     }
 }
 
 void Geez::RenderStrategySector::execute(IRenderData &data, const RenderContext &context)
 {
-    RenderDataSector_t& sector = static_cast<RenderDataSector_t&>(data);
+    const RenderDataSector_t& sector = static_cast<RenderDataSector_t&>(data);
     if (sector.mesh.expired()) {
         GZ_LOG_FORCE(GZ_FAIL, "[RENDERER] Cannot render sector, pointer expired.");
         return; 
@@ -101,13 +103,16 @@ void Geez::RenderStrategySector::execute(IRenderData &data, const RenderContext 
     // Floor Mesh
     mat4 flor_model = mat4(1.0f);
     flor_model = translate(flor_model, vec3(0, sector.floor, 0));
+    const vec2 uv_scale(1.5);
+
     bind(
         context, 
         flor_model,
         sector.shader_id, 
         sector.texture_id_flor, 
         false, 
-        vec2(1)
+        false,
+        uv_scale
     );
     GL(glDrawElements(GL_TRIANGLES, sector.index_count, GL_UNSIGNED_INT, nullptr));
     
@@ -120,7 +125,8 @@ void Geez::RenderStrategySector::execute(IRenderData &data, const RenderContext 
         sector.shader_id, 
         sector.texture_id_ceil, 
         true, 
-        vec2(1)
+        false,
+        uv_scale
     );
     GL(glDrawElements(GL_TRIANGLES, sector.index_count, GL_UNSIGNED_INT, nullptr));
 

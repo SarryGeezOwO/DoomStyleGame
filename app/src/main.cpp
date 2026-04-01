@@ -100,7 +100,6 @@ void init() {
     RenderContext context;
     context.active_camera   = &camera;
     context.active_window   = window.get();
-    context.gameobjects     = entities.get();
     context.meshes          = meshes.get();
     context.resources       = resource.get();
     renderer->set_context(std::make_unique<RenderContext>(context));
@@ -357,7 +356,17 @@ void render()
         .set_uniform<vec3>("u_light.specular", vec3(0.1f));
     }
     
+    // Gameobjects
     renderer->submit_map_geometry(*resource->get<GeezMapData>(sample_map));
+    for (const GameObject* object : *entities) {
+        RenderDataGameobject_t data;
+        data.shader_id      = object->shader_id;
+        data.texture_ids[0] = object->texture_id;
+        data.position       = object->position;
+        data.rotation       = object->rotation;
+        data.scale          = object->scale;
+        renderer->submit(std::make_unique<RenderDataGameobject_t>(data));
+    }
     renderer->flush();
 }
 

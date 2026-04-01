@@ -21,8 +21,6 @@ namespace Geez
     struct RenderContext {
         Camera* active_camera = nullptr;
         Window* active_window = nullptr;
-    
-        GameObjectManager*  gameobjects = nullptr; 
         MeshManager*        meshes      = nullptr; 
         ResourceManager*    resources   = nullptr;
 

@@ -3,6 +3,7 @@
 #include "shader.hpp"
 #include "texture.hpp"
 #include "resource/resource.hpp"
+#include "util/geometry_util.hpp"
 #include "util/error.hpp"
 #include "util/log.hpp"
 #include <gl/glew.h>
@@ -69,7 +70,7 @@ void Geez::RenderStrategyWall::execute(IRenderData &data, const RenderContext &c
         context, 
         model,
         wall.shader_id, 
-        wall.texture_id, 
+        wall.texture_ids[0], 
         (facing < 0.0f),
         true,
         vec2(1.5)
@@ -109,7 +110,7 @@ void Geez::RenderStrategySector::execute(IRenderData &data, const RenderContext 
         context, 
         flor_model,
         sector.shader_id, 
-        sector.texture_id_flor, 
+        sector.texture_ids[0], 
         false, 
         false,
         uv_scale
@@ -123,7 +124,7 @@ void Geez::RenderStrategySector::execute(IRenderData &data, const RenderContext 
         context, 
         ceil_model, 
         sector.shader_id, 
-        sector.texture_id_ceil, 
+        sector.texture_ids[1], 
         true, 
         false,
         uv_scale
@@ -135,7 +136,29 @@ void Geez::RenderStrategySector::execute(IRenderData &data, const RenderContext 
 
 void Geez::RenderStrategyGameobject::execute(IRenderData &data, const RenderContext &context)
 {
+    const RenderDataGameobject_t& object = static_cast<RenderDataGameobject_t&>(data);
+    if (!context.meshes->exists("QUAD")) {
+        GZ_LOG_FORCE(GZ_FAIL, "Cannot draw billboard, no quad mesh available.");
+        return;
+    }
 
+    Mesh* mesh = context.meshes->get("QUAD");
+    mat4 model =  mat4(1.0f);
+        model =  translate(model, object.position);
+        model *= make_rotation_from_quaternion(object.rotation);
+        model =  scale(model, object.scale);
+
+    mesh->bind();
+    bind(
+        context,
+        model,
+        object.shader_id,
+        object.texture_ids[0],
+        false,
+        false
+    );
+    GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr)); // Magic 6
+    context.meshes->unbind();
 }
 
 void Geez::RenderStrategyGUI::execute(IRenderData &data, const RenderContext &context)

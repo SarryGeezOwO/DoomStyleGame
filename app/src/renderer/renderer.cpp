@@ -23,10 +23,6 @@ bool Geez::RenderContext::validate() const
         GZ_LOG_FORCE(GZ_FAIL, "[RENDERER] RenderContext missing active_window.");
     }
 
-    if (!gameobjects) {
-        GZ_LOG_FORCE(GZ_FAIL, "[RENDERER] RenderContext missing gameobjects.");
-    }
-
     if (!meshes) {
         GZ_LOG_FORCE(GZ_FAIL, "[RENDERER] RenderContext missing meshes.");
     }
@@ -38,7 +34,6 @@ bool Geez::RenderContext::validate() const
     return         
         active_camera   &&
         active_window   &&
-        gameobjects     &&
         meshes          &&
         resources;
 }
@@ -71,13 +66,13 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
             const vec2 point_b = {wall.point_b[0], wall.point_b[1]};
 
             RenderDataWall_t wall_data;
-            wall_data.debug_line    = true;
-            wall_data.flipped       = false;
-            wall_data.shader_id     = lit_shader;
-            wall_data.texture_id    = wall.texture_id;
-            wall_data.ref_center    = sector.center;
-            wall_data.a             = point_a;
-            wall_data.b             = point_b;
+            wall_data.debug_line     = true;
+            wall_data.flipped        = false;
+            wall_data.shader_id      = lit_shader;
+            wall_data.texture_ids[0] = wall.texture_id;
+            wall_data.ref_center     = sector.center;
+            wall_data.a              = point_a;
+            wall_data.b              = point_b;
 
             // Render full quad from ceil to floor
             if (!wall.is_portal) {
@@ -148,8 +143,8 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
 
         // Render Floor and Ceil, Floor and ceils are guranteed to be opaque objects
         RenderDataSector_t r_sector;
-        r_sector.texture_id_flor = sector.texture_id_floor;
-        r_sector.texture_id_ceil = sector.texture_id_ceil;
+        r_sector.texture_ids[0] = sector.texture_id_floor;
+        r_sector.texture_ids[1] = sector.texture_id_ceil;
         r_sector.shader_id  = lit_shader;
         r_sector.floor = sector.floor_height;
         r_sector.ceil  = sector.ceil_height;
@@ -193,50 +188,6 @@ void Geez::Renderer::flush()
         strategies[type]->execute(*data, *context.get());
     }
     render_list.clear();
-
-    /*
-        TODO:
-            Migrate gameobject rendering to main.cpp and by 
-            RenderStrategy, Also Crosshair, so we can actually fucking start 
-            doing gameplay.
-    */
-
-    // Gameobjects
-    if (!context->meshes->exists("QUAD")) {
-        GZ_LOG_FORCE(GZ_FAIL, "Cannot draw Billboards(Gameobjects), no quad mesh available.");
-        SDL_GL_SwapWindow(context->active_window->handle());
-        return;
-    }
-
-    context->meshes->bind("QUAD");
-    for (const GameObject* object : *context->gameobjects) {
-        mat4 model =  mat4(1.0f);
-             model =  translate(model, object->position);
-             model *= make_rotation_from_quaternion(object->rotation);
-             model =  scale(model, object->scale);
-
-        Shader*  shader  = context->resources->get<Shader>(object->shader_id);
-        Texture* texture = context->resources->get<Texture>(object->texture_id);
-
-        if (texture) texture->bind(0);
-        if (shader) {
-            shader->bind();
-            shader->
-                set_uniform<I32>("u_texture", 0)
-                .set_uniform<mat4>("u_proj",  context->active_camera->projection_matrix())
-                .set_uniform<mat4>("u_view",  context->active_camera->view_matrix())
-                .set_uniform<mat4>("u_model", model)
-                .set_uniform<vec2>("u_uv_scale", vec2(1))
-                .set_uniform<vec2>("u_uv_offset", vec2(0));
-
-            if (shader->has_uniform("u_normalFlip")) {
-                shader->set_uniform<F32>("u_normalFlip", 1.0f);
-            }
-        }
-        GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr)); // Magic 6
-    }
-
-    context->meshes->unbind();
     SDL_GL_SwapWindow(context->active_window->handle());
 }
 

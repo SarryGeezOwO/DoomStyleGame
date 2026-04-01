@@ -34,8 +34,9 @@ namespace Geez
     protected:
         RenderType type = R_NONE;
 
-    public:
+    public:    
         ResourceID shader_id    = "";
+        ResourceID texture_ids[8]; // 8 texture slots avail or something
     };
 
 // ================================================= //
@@ -52,7 +53,6 @@ namespace Geez
         F32 yTop;
         bool flipped;
         bool debug_line;
-        ResourceID texture_id   = "";
     };
 
     struct RenderDataSector_t : IRenderData {
@@ -62,12 +62,15 @@ namespace Geez
         F32 floor;
         F32 ceil;
         std::weak_ptr<sector_mesh_t> mesh;
-        ResourceID texture_id_flor = "";
-        ResourceID texture_id_ceil = "";
+        // texture   0-floor   1-ceil
     };
 
     struct RenderDataGameobject_t : IRenderData {
         RenderDataGameobject_t() { type = R_GAMEOBJECT; }
+
+        glm::vec3 position;
+        glm::vec3 rotation;
+        glm::vec3 scale;
     };
 
     struct RenderDataGUI_t : IRenderData {

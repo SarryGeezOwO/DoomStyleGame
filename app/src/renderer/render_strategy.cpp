@@ -15,8 +15,10 @@ namespace Geez
 {
     // Errmm, my mind is currently fried...
     static void bind(const RenderContext &context, const mat4& model,
-        const ResourceID& shader_id, const ResourceID& texture_id, bool isFliped, bool use_uv_world, const vec2& uv_scale = vec2(1))
+        const ResourceID& shader_id, const ResourceID& texture_id, 
+        bool isFliped, bool use_uv_world, const vec2& uv_scale = vec2(1))
     {
+
         // Pass in nullptr on texture for no texture duh...
         Shader*  shader  = context.resources->get<Shader>(shader_id);
         Texture* texture = context.resources->get<Texture>(texture_id);
@@ -28,8 +30,8 @@ namespace Geez
         if (shader) {
             shader->bind();
             shader->
-                set_uniform<mat4>("u_proj",  context.active_camera->projection_matrix())
-                .set_uniform<mat4>("u_view",  context.active_camera->view_matrix())
+                set_uniform<mat4>("u_proj",   context.active_camera->projection_matrix())
+                .set_uniform<mat4>("u_view",  (context.active_camera->is_orthographic() ? mat4(1.0f) : context.active_camera->view_matrix()))
                 .set_uniform<mat4>("u_model", model);
 
             if (shader->has_uniform("u_texture"))     shader->set_uniform<I32>("u_texture", 0);
@@ -163,5 +165,27 @@ void Geez::RenderStrategyGameobject::execute(IRenderData &data, const RenderCont
 
 void Geez::RenderStrategyGUI::execute(IRenderData &data, const RenderContext &context)
 {
+    const RenderDataGUI_t& gui = static_cast<RenderDataGUI_t&>(data);
+    if (!context.meshes->exists("QUAD")) {
+        GZ_LOG_FORCE(GZ_FAIL, "Cannot draw billboard, no quad mesh available.");
+        return;
+    }
 
+    Mesh* mesh = context.meshes->get("QUAD");
+    mat4 model =  mat4(1.0f);
+        model =  translate(model, vec3(gui.screen_pos.x, gui.screen_pos.y, 0.0f));
+        model =  rotate(model, radians(gui.angle), vec3(0, 0, 1));
+        model =  scale(model, vec3(gui.size.x, gui.size.y, 1));
+
+    mesh->bind();
+    bind(
+        context,
+        model,
+        gui.shader_id,
+        gui.texture_ids[0],
+        false,
+        false
+    );
+    GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr)); // Magic 6
+    context.meshes->unbind();   
 }

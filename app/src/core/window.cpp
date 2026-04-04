@@ -1,6 +1,5 @@
 #include "window.hpp"
 #include "util/log.hpp"
-#include "util/common_types.hpp"
 
 Geez::Window::Window(const std::string &title, const glm::ivec2& size)
     : m_size(size)

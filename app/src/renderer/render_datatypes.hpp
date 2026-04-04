@@ -75,6 +75,10 @@ namespace Geez
 
     struct RenderDataGUI_t : IRenderData {
         RenderDataGUI_t() { type = R_GUI; }
+        
+        glm::vec2 screen_pos;
+        glm::vec2 size;
+        F32 angle;
     };
 }
 

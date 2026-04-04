@@ -21,11 +21,6 @@ namespace Geez
 
     // ==================== Shader ============================
 
-    /*
-        TODO: Shader initializes every uniforms found in source
-              by calling get_uniform() each
-    */
-
     struct Shader : IResource
     {
     private:

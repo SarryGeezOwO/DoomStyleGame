@@ -167,6 +167,10 @@ void Geez::Renderer::submit(std::unique_ptr<IRenderData> data)
 
 void Geez::Renderer::flush()
 {
+    glEnable(GL_DEPTH_TEST);
+    GL(glClearColor(0.1f, 0.1f, 0.1f, 1.0f));
+    GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+
     if (!context->validate()) {
         return;
     }
@@ -176,13 +180,21 @@ void Geez::Renderer::flush()
     std::sort(render_list.begin(), render_list.end(), [](const auto& a, const auto& b) 
     { return a->type < b->type; });
 
+    context->active_camera->perspective();
     for (const auto& data_ptr : render_list) 
     {   
         IRenderData* data       = data_ptr.get();
         const RenderType type   = data->type;
 
-        if (type == R_NONE) {
-            continue;
+        switch(type) {
+            case R_NONE: continue;
+            case R_GUI: {
+                glDisable(GL_DEPTH_TEST);
+                GL(glClear(GL_DEPTH_BUFFER_BIT));
+                context->active_camera->orthographic(); 
+                break;
+            }
+            default: break;
         }
         
         strategies[type]->execute(*data, *context.get());

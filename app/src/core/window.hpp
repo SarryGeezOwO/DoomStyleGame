@@ -1,6 +1,7 @@
 #ifndef GZ_WINDOW_HPP
 #define GZ_WINDOW_HPP
 
+#include "util/common_types.hpp"
 #include <gl/glew.h>
 #include <SDL3/SDL.h>
 #include <glm/glm.hpp>
@@ -32,6 +33,9 @@ namespace Geez
         inline bool is_cursor_shown() const { return m_cursor_visible; }
         inline bool error() const { return m_hasError; }
         inline SDL_Window* handle() const { return m_window; }
+
+        inline F32 width()  const { return static_cast<F32>(m_size[0]); }
+        inline F32 height() const { return static_cast<F32>(m_size[1]); }
     };
 }
 

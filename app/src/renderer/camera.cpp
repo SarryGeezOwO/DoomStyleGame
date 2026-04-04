@@ -24,7 +24,7 @@ void Geez::Camera::update_projection()
     if (m_isOrthographic) {
         glm::vec2 half = m_resolution / 2;
         m_proj_matrix = glm::ortho(
-            -half.x, half.x, -half.y, half.y, m_near, m_far
+            -half.x, half.x, -half.y, half.y, -1.0f, 1.0f
         );
         return;
     }

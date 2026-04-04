@@ -4,6 +4,7 @@
 
 #include <GL/glew.h>
 #include <SDL3/SDL.h>
+#include <sstream>
 
 Geez::U32 compile_shader(Geez::U32 type, const char* source)
 {
@@ -60,7 +61,7 @@ Geez::Shader::Shader(const ShaderSource& source)
 
     // Get Shader uniforms
     std::string merged_source = source.vertex + "\n" + source.fragment;
-    std::istringstream stream(merged_source);
+    std::stringstream stream(merged_source);
     std::string line;
 
     while (std::getline(stream, line)) {

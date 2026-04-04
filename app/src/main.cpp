@@ -340,9 +340,6 @@ void update()
 
 void render()
 {
-    GL(glClearColor(0.1f, 0.1f, 0.1f, 1.0f));
-    GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
-
     // Light Shader Uniforms
     Shader* light_shader = resource->get<Shader>(light_shader_name);
     if (light_shader) {
@@ -367,6 +364,17 @@ void render()
         data.scale          = object->scale;
         renderer->submit(std::make_unique<RenderDataGameobject_t>(data));
     }
+
+    // Crosshair
+    RenderDataGUI_t crosshair;
+    crosshair.shader_id      = unlit_shader_name;
+    crosshair.texture_ids[0] = "Crosshair";
+    crosshair.screen_pos     = vec2(0, 0);
+    crosshair.angle          = 0;
+    crosshair.size           = vec2(25.0f);
+    renderer->submit(std::make_unique<RenderDataGUI_t>(crosshair));
+    
+    // Done
     renderer->flush();
 }
 

@@ -36,7 +36,7 @@ namespace Geez
 
     public:    
         ResourceID shader_id    = "";
-        ResourceID texture_ids[8]; // 8 texture slots avail or something
+        ResourceID texture_ids[3]; // 3 texture slots avail or something
     };
 
 // ================================================= //

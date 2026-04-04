@@ -320,16 +320,12 @@ void update()
         // Moving a floor will not move it's height
         if (map_data->get_sector(1) != nullptr) {       
             F32 add = 0.5f;
-            if (input.check_key(SDLK_LSHIFT, GZ_HOLD)) {
-                map_data->get_sector(1)->ceil_height += (
-                    (input.check_mouse_left(GZ_HOLD) - input.check_mouse_right(GZ_HOLD)) * add
-                ) * delta_time;
-            }
-            else {
-                map_data->get_sector(1)->floor_height += (
-                    (input.check_mouse_left(GZ_HOLD) - input.check_mouse_right(GZ_HOLD)) * add
-                ) * delta_time;
-            }
+            map_data->get_sector(1)->floor_height += (
+                (input.check_mouse_left(GZ_HOLD) - input.check_mouse_right(GZ_HOLD)) * add
+            ) * delta_time;
+            map_data->get_sector(1)->ceil_height += (
+                (input.check_mouse_left(GZ_HOLD) - input.check_mouse_right(GZ_HOLD)) * add
+            ) * delta_time;
         }
 
         if (input.check_key(SDLK_SPACE, GZ_TAP)) {
@@ -373,7 +369,7 @@ void render()
     crosshair.angle          = 0;
     crosshair.size           = vec2(25.0f);
     renderer->submit(std::make_unique<RenderDataGUI_t>(crosshair));
-    
+
     // Done
     renderer->flush();
 }

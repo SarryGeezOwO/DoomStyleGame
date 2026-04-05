@@ -18,6 +18,10 @@ Don't judge me pls 💔💔💔
 #include "core/mesh.hpp"
 #include "core/mesh_manager.hpp"
 
+// Physics
+#include "physics/physics_comp.hpp"
+#include "physics/physics.hpp"
+
 // Renderer
 #include "renderer/camera.hpp"
 #include "renderer/vertex_buffer.hpp"

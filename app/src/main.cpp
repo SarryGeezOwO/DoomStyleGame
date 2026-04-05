@@ -47,6 +47,7 @@ static std::unique_ptr<GameObjectManager> entities;
 static std::unique_ptr<MeshManager> meshes;
 static Camera camera(WORLD_UP);
 static Input input;
+static PhysicsSystem physics;
 
 // ================ TEMP ===================//
 

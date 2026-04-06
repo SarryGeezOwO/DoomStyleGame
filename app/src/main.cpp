@@ -38,6 +38,7 @@ static I32 frame_tick;  // Tick count every second
 static F32 runtime_fps;
 static F32 cam_sensitivity = 0.075f;
 static ResourceID current_map = "sample";
+static GameObject* player = nullptr;
 
 static bool isRunning = true;
 static std::unique_ptr<Window> window;
@@ -86,7 +87,7 @@ void init() {
     // Sub Systems
     window->set_cursor_visible(false);
 
-    physics.gravity = -0.5f;
+    physics.gravity = -0.65f;
     renderer  = std::make_unique<Renderer>();
     audio     = std::make_unique<AudioPlayer>(MAX_MIXER_CHANNEL);
     entities  = std::make_unique<GameObjectManager>();
@@ -136,45 +137,55 @@ void onQuit()
 }
 
 void start()
-{   
-    // Sun gameobject
+{
+    // Center of sector ID 0
+    vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
+
+    // Player   
+    player = entities->create("Player", unlit_shader_name, "DefaultTexture");
+    entities->attach_physics_component(player->id());
+    player->position    = vec3(c.x,  0.8f, c.y); 
+    player->scale       = vec3(0.1f, 0.1f, 0.1f);
+    player->visible     = false;
+    player->physics->height             = 0.3f;
+    player->physics->collision_radius   = 0.05f;
+    player->physics->step_height        = 0.125f;
+
+    // Sun
     auto instance1 = entities->create("LightSource", unlit_shader_name, "sun");
     instance1->scale = vec3(0.2f, 0.2f, 1.0f);
 
+    // Random Shu image
     auto shu = entities->create("Shu_Arknights", unlit_shader_name, "ShuAK");
     shu->scale = vec3(0.5f, 0.5f, 1.0f);
-    vec2 centerMap = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
-    shu->position = vec3(centerMap.x, 0.25f, centerMap.y);
-
-    vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
-    camera.position = vec3(c.x, 0.1f, c.y);
+    shu->position = vec3(c.x, 0.25f, c.y);
 }
 
 void logic_map_change() {
     if (input.check_key(SDLK_1, GZ_TAP)) {
         current_map = "sample";
         vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
-        camera.position = vec3(c.x, 0.1f, c.y);
+        player->position = vec3(c.x, 0.1f, c.y);
     }
     else if (input.check_key(SDLK_2, GZ_TAP)) {
         current_map = "centerHole";
         vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
-        camera.position = vec3(c.x, 0.3f, c.y);
+        player->position = vec3(c.x, 0.3f, c.y);
     }
     else if (input.check_key(SDLK_3, GZ_TAP)) {
         current_map = "stairs";
         vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
-        camera.position = vec3(c.x, 0.1f, c.y);
+        player->position = vec3(c.x, 0.1f, c.y);
     }
     else if (input.check_key(SDLK_4, GZ_TAP)) {
         current_map = "hole_in_hole";
         vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
-        camera.position = vec3(c.x, 0.1f, c.y);
+        player->position = vec3(c.x, 0.1f, c.y);
     }
     else if (input.check_key(SDLK_5, GZ_TAP)) {
         current_map = "map_editor";
         vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
-        camera.position = vec3(c.x, 0.1f, c.y);
+        player->position = vec3(c.x, 0.1f, c.y);
     }
 }
 
@@ -203,96 +214,9 @@ void logic_character_controller(GeezMapData* map) {
         moveDir = glm::normalize(moveDir);
     }
 
-    // camera Vertcal collision
-    bool isGrounded = false;
-    const F32 gravity = 1.25f;
-    const F32 cameraHeight = 0.3f;
-    const F32 gravForce = gravity * delta_time;
-    const F32 cameraGroundY = (camera.position.y - cameraHeight);
-    vec2 camPosXZ = vec2(camera.position.x, camera.position.z);
-    F32 bestFloor = -1000000.0f;
-    bool foundSector = false;
-
-    {   // =============== Vertical collision SCOPE =============== //
-        for (const sector_t& sector : map->get_sectors()) {
-            bool isInside  = is_point_in_sector(camPosXZ, sector);
-            if (!isInside) continue;
-
-            // Get the highest floor sector on your standig point
-            if (sector.floor_height > bestFloor) {
-                bestFloor   = sector.floor_height;
-                foundSector = true;
-            }
-        }
-
-        if (foundSector) {
-            if (cameraGroundY - gravForce <= bestFloor) {
-                camera.position.y = (bestFloor + cameraHeight);
-                isGrounded = true;
-            }
-        }
-    
-        if (!isGrounded) {
-            camera.position.y -= gravForce;
-        }
-    }
-
-    // camera update position
-    camera.position += (moveDir * moveSpd * delta_time);
-
-    // ================ Horizontal Collision ================ //
-    const F32 camRadius = 0.05f;
-    const F32 heightStepThreshold = 0.125f;
-    camPosXZ.x = camera.position.x;
-    camPosXZ.y = camera.position.z;
-
-    for (const sector_t& sector : map->get_sectors()) {
-        bool isCameraInSector = is_point_in_sector(camPosXZ, sector);
-        if (!isCameraInSector) continue; 
-
-        for (U32 wid : sector.walls) {
-            wall_t& wall = *map->get_wall(wid);
-
-            // Since walls absolutely only contains two sectors as "connected"
-            // compare their heights, and only allow pass through when below threshold
-            // pass if max floor is less than realCamY
-            if (wall.is_portal) {
-                const sector_t *sa = map->get_sector(wall.connected_sectors[0]);
-                const sector_t *sb = map->get_sector(wall.connected_sectors[1]);
-
-                if (sa && sb) {
-                    const F32 sfDiff        = abs(sa->floor_height - sb->floor_height);
-                    const F32 highest_floor = max(sa->floor_height, sb->floor_height);
-                    const F32 lowest_ceil   = min(sa->ceil_height,  sb->ceil_height);
-                    const F32 gap           = abs(highest_floor - lowest_ceil); 
-
-                    // Bypass collision checking upon these conditions
-                    // Gap between max_floor and min_ceil is greater than or equal to the  object_height 
-                    if (gap >= cameraHeight)
-                    {
-                        if (highest_floor < (cameraGroundY + 0.005f) && sector.floor_height < lowest_ceil) 
-                            continue; // Stepping down
-                        else if (sfDiff <= heightStepThreshold)
-                            continue; // stepping up scenario
-                    }
-                }
-            }
-
-            const vec2 p1(wall.point_a[0], wall.point_a[1]);
-            const vec2 p2(wall.point_b[0], wall.point_b[1]);
-
-            vec2 closest = closest_point_on_segment(p1, p2, camPosXZ);
-            vec2 diff    = camPosXZ - closest;
-            F32 dist     = length(diff);
-
-            if (dist < camRadius) {
-                vec2 pushDir = normalize(diff);
-                F32 penetration = camRadius - dist;
-                camera.position.x += pushDir.x * penetration;
-                camera.position.z += pushDir.y * penetration;
-            }
-        }   
-    }
+    // Player is guranteed to have physics component anyways,
+    // so no need to check for physics_component_t presence
+    player->physics->velocity = (moveDir * moveSpd);
 }
 
 void update()
@@ -318,9 +242,12 @@ void update()
 
         ball = entities->create("Ball");
         if (ball){
+            entities->attach_physics_component(ball->id());
             ball->position = camera.position + (camera.axis_forward() * 0.2f);
             ball->scale = vec3(0.1f, 0.1f, 1.0f);
-            entities->attach_physics_component(ball->id());
+            ball->physics->height       = 0.1f;
+            ball->physics->step_height  = 0.0f;
+            ball->physics->collision_radius = 0.05f;
         }
     }
 
@@ -344,6 +271,10 @@ void update()
     }
 }
 
+void post_update() {
+    camera.position = player->position + vec3(0, (player->physics->height * 0.5f), 0);
+}
+
 void render()
 {
     // Light Shader Uniforms
@@ -362,6 +293,8 @@ void render()
     // Gameobjects
     renderer->submit_map_geometry(*resource->get<GeezMapData>(current_map));
     for (const GameObject* object : *entities) {
+        if (!object->visible) continue;
+
         renderer->submit(std::make_unique<RenderDataGameobject_t>([&]{
             RenderDataGameobject_t d{};
             d.shader_id      = object->shader_id;
@@ -418,6 +351,7 @@ int main()
         camera.update();
         update();
         physics.update(*entities, *resource->get<GeezMapData>(current_map), delta_time);
+        post_update();
         render();
         
         // runtime FPS Calculation

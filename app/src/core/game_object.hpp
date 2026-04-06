@@ -21,9 +21,10 @@ namespace Geez
 
     public:
         physics_component_t* physics = nullptr; // instantiated with 'new'
-        
-        glm::vec3 position;
-        glm::vec3 scale;
+        bool visible;
+
+        glm::vec3 position{};
+        glm::vec3 scale{1, 1, 1};
         
         ResourceID texture_id;
         ResourceID shader_id;

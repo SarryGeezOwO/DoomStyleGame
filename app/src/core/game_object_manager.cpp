@@ -7,8 +7,6 @@ void Geez::GameObjectManager::attach_physics_component(const InstanceID &id)
     GameObject* obj = get(id);
     if (obj) {
         obj->physics = new physics_component_t(obj);
-        obj->physics->position          = obj->position;
-        obj->physics->height            = obj->scale.y;
         obj->physics->collision_radius  = 0.05f;
         obj->physics->step_height       = 0.0f;
     }
@@ -26,6 +24,7 @@ Geez::GameObject *Geez::GameObjectManager::create(const InstanceID &id)
     std::unique_ptr<GameObject> instance = std::make_unique<GameObject>(id);
     instance->shader_id = "unlit_texture";
     instance->texture_id = "DefaultTexture";
+    instance->visible = true;
     
     m_game_objects.insert({id, std::move(instance)});
     GZ_LOG(GZ_OK, "GameObject Created [%s]", id.c_str());

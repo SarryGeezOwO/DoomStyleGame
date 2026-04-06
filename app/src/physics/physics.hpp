@@ -11,10 +11,10 @@ namespace Geez
 {
     struct PhysicsSystem {
     private:
-        void apply_gravity(physics_component_t& obj, F32 dt) const;
+        void apply_gravity(physics_component_t& obj) const;
         void vertical_collision(physics_component_t& obj,   const GeezMapData& map) const;
         void horizontal_collision(physics_component_t& obj, const GeezMapData& map) const;
-        void apply_velocity(physics_component_t& obj, F32 dt) const;
+        void apply_velocity(physics_component_t& obj) const;
 
     public:
         F32 gravity;

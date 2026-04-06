@@ -4,6 +4,8 @@
 using namespace glm;
 namespace Geez
 {
+    static F32 delta_time;
+
     /*
         Object position is located at the center of the model
         x -> width/2
@@ -11,10 +13,11 @@ namespace Geez
         kind of thing...
     */
 
-    void PhysicsSystem::apply_gravity(physics_component_t &obj, F32 dt) const
+    // position if velocity is applied
+    void PhysicsSystem::apply_gravity(physics_component_t &obj) const
     {
         if (!obj.grounded) {
-            obj.position.y += gravity * dt;
+            obj.position.y += gravity * delta_time;
         }
     }
 
@@ -41,6 +44,7 @@ namespace Geez
         if (foundSector) {
             if (groundY <= bestFloor) {
                 obj.position.y = (bestFloor + (obj.height * 0.5f));
+                obj.velocity.y = 0;
                 obj.grounded = true;
             }
         }
@@ -48,8 +52,7 @@ namespace Geez
 
     void PhysicsSystem::horizontal_collision(physics_component_t &obj, const GeezMapData &map) const
     {
-        const F32 groundY   = (obj.position.y - obj.height);
-        const vec2 posXZ = vec2(obj.position.x, obj.position.z);
+        const vec2 posXZ    = vec2(obj.position.x, obj.position.z);
 
         for (const sector_t& sector : map.get_sectors()) {
             bool isCameraInSector = is_point_in_sector(posXZ, sector);
@@ -75,7 +78,7 @@ namespace Geez
                         // Gap between max_floor and min_ceil is greater than or equal to the  object_height 
                         if (gap >= obj.height)
                         {
-                            if (highest_floor < (groundY + 0.005f) && sector.floor_height < lowest_ceil) 
+                            if (highest_floor < obj.position.y && sector.floor_height < lowest_ceil) 
                                 continue; // Stepping down
                             else if (sfDiff <= obj.step_height)
                                 continue; // stepping up scenario
@@ -100,19 +103,21 @@ namespace Geez
         }
     }
 
-    void PhysicsSystem::apply_velocity(physics_component_t &obj, F32 dt) const
+    void PhysicsSystem::apply_velocity(physics_component_t &obj) const
     {
-        obj.position += obj.velocity * dt;
+        obj.position += obj.velocity * delta_time;
     }
 
     void PhysicsSystem::update(GameObjectManager &manager, const GeezMapData &map, float dt) {
 
+        delta_time = dt;
         for (GameObject* obj : manager) {
             if (!obj->physics) continue;
-            apply_gravity(*obj->physics, dt);
+            obj->physics->position = obj->position;
+            apply_gravity(*obj->physics);
             vertical_collision(*obj->physics, map);
+            apply_velocity(*obj->physics);
             horizontal_collision(*obj->physics, map);
-            apply_velocity(*obj->physics, dt);
             obj->position = obj->physics->position;
         }
     }

@@ -22,6 +22,8 @@ namespace Geez
         std::unordered_map<InstanceID, std::unique_ptr<GameObject>> m_game_objects;
         
     public:
+        void attach_physics_component(const InstanceID& id);
+
         /**
          * @brief Creates a new basic GameObject instance
          * @param id The unique identifier for the GameObject

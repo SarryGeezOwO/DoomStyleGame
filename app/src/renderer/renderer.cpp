@@ -65,20 +65,23 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
             const vec2 point_a = {wall.point_a[0], wall.point_a[1]};
             const vec2 point_b = {wall.point_b[0], wall.point_b[1]};
 
-            RenderDataWall_t wall_data;
-            wall_data.debug_line     = true;
-            wall_data.flipped        = false;
-            wall_data.shader_id      = lit_shader;
-            wall_data.texture_ids[0] = wall.texture_id;
-            wall_data.ref_center     = sector.center;
-            wall_data.a              = point_a;
-            wall_data.b              = point_b;
+            auto r_wall_data = [&]{
+                RenderDataWall_t d{};
+                d.debug_line     = true;
+                d.flipped        = false;
+                d.shader_id      = lit_shader;
+                d.texture_ids[0] = wall.texture_id;
+                d.ref_center     = sector.center;
+                d.a              = point_a;
+                d.b              = point_b;
+                return d;
+            }();
 
             // Render full quad from ceil to floor
             if (!wall.is_portal) {
-                wall_data.yBottom = sector.floor_height;
-                wall_data.yTop = sector.ceil_height;
-                submit(std::make_unique<RenderDataWall_t>(wall_data));
+                r_wall_data.yBottom = sector.floor_height;
+                r_wall_data.yTop = sector.ceil_height;
+                submit(std::make_unique<RenderDataWall_t>(r_wall_data));
                 continue;
             }
 
@@ -104,35 +107,35 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
                 
                 // If overlapping, then draw the entire rect and continue to the next wall
                 if (max_floor >= min_ceil) {
-                    wall_data.yBottom = min_floor;
-                    wall_data.yTop = max_ceil;
-                    submit(std::make_unique<RenderDataWall_t>(wall_data));
+                    r_wall_data.yBottom = min_floor;
+                    r_wall_data.yTop = max_ceil;
+                    submit(std::make_unique<RenderDataWall_t>(r_wall_data));
                     continue;
                 }
 
                 // Floor Wall
-                wall_data.yBottom    = min_floor;
-                wall_data.yTop       = max_floor;
-                wall_data.ref_center = (hole_present) ? center_hole : floor_look;
+                r_wall_data.yBottom    = min_floor;
+                r_wall_data.yTop       = max_floor;
+                r_wall_data.ref_center = (hole_present) ? center_hole : floor_look;
                 if (hole_present) {
-                    wall_data.flipped = (sector.is_hole) ? 
+                    r_wall_data.flipped = (sector.is_hole) ? 
                         (max_floor == sector.floor_height)
                         :
                         (max_floor == prev_sec.floor_height);
                 }
-                submit(std::make_unique<RenderDataWall_t>(wall_data));
+                submit(std::make_unique<RenderDataWall_t>(r_wall_data));
                 
                 // Ceil Wall
-                wall_data.yBottom    = min_ceil;
-                wall_data.yTop       = max_ceil;
-                wall_data.ref_center = (hole_present) ? center_hole : ceil_look;
+                r_wall_data.yBottom    = min_ceil;
+                r_wall_data.yTop       = max_ceil;
+                r_wall_data.ref_center = (hole_present) ? center_hole : ceil_look;
                 if (hole_present) {
-                    wall_data.flipped = (sector.is_hole) ? 
+                    r_wall_data.flipped = (sector.is_hole) ? 
                         (min_ceil == sector.ceil_height)
                         :
                         (min_ceil == prev_sec.ceil_height);
                 }
-                submit(std::make_unique<RenderDataWall_t>(wall_data));
+                submit(std::make_unique<RenderDataWall_t>(r_wall_data));
                 
             }
             else {
@@ -142,15 +145,17 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
         }
 
         // Render Floor and Ceil, Floor and ceils are guranteed to be opaque objects
-        RenderDataSector_t r_sector;
-        r_sector.texture_ids[0] = sector.texture_id_floor;
-        r_sector.texture_ids[1] = sector.texture_id_ceil;
-        r_sector.shader_id  = lit_shader;
-        r_sector.floor = sector.floor_height;
-        r_sector.ceil  = sector.ceil_height;
-        r_sector.mesh  = map.get_weak_sector_mesh(sector.id);
-        r_sector.index_count = map.get_sector_mesh(sector.id)->ebo->count();
-        submit(std::make_unique<RenderDataSector_t>(r_sector));
+        submit(std::make_unique<RenderDataSector_t>([&]{
+            RenderDataSector_t d{};
+            d.texture_ids[0] = sector.texture_id_floor;
+            d.texture_ids[1] = sector.texture_id_ceil;
+            d.shader_id      = lit_shader;
+            d.floor          = sector.floor_height;
+            d.ceil           = sector.ceil_height;
+            d.mesh           = map.get_weak_sector_mesh(sector.id);
+            d.index_count    = map.get_sector_mesh(sector.id)->ebo->count();
+            return d;
+        }()));
         
         // Don't ask why this debug_line is in here
         // as opposed to being in render_strategy.cpp

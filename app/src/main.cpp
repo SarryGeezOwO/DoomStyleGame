@@ -37,6 +37,7 @@ static F32 frame_timer; // Timer every second
 static I32 frame_tick;  // Tick count every second
 static F32 runtime_fps;
 static F32 cam_sensitivity = 0.075f;
+static ResourceID current_map = "sample";
 
 static bool isRunning = true;
 static std::unique_ptr<Window> window;
@@ -46,12 +47,11 @@ static std::unique_ptr<ResourceManager> resource;
 static std::unique_ptr<GameObjectManager> entities;
 static std::unique_ptr<MeshManager> meshes;
 static Camera camera(WORLD_UP);
-static Input input;
-static PhysicsSystem physics;
+static Input input{};
+static PhysicsSystem physics{};
 
 // ================ TEMP ===================//
 
-std::string sample_map = "sample";
 vec3 light_pos = vec3(0, 1, 0);
 
 // =========================================//
@@ -86,6 +86,7 @@ void init() {
     // Sub Systems
     window->set_cursor_visible(false);
 
+    physics.gravity = -0.5f;
     renderer  = std::make_unique<Renderer>();
     audio     = std::make_unique<AudioPlayer>(MAX_MIXER_CHANNEL);
     entities  = std::make_unique<GameObjectManager>();
@@ -142,37 +143,37 @@ void start()
 
     auto shu = entities->create("Shu_Arknights", unlit_shader_name, "ShuAK");
     shu->scale = vec3(0.5f, 0.5f, 1.0f);
-    vec2 centerMap = resource->get<GeezMapData>(sample_map)->get_sector(0)->center;
+    vec2 centerMap = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
     shu->position = vec3(centerMap.x, 0.25f, centerMap.y);
 
-    vec2 c = resource->get<GeezMapData>(sample_map)->get_sector(0)->center;
+    vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
     camera.position = vec3(c.x, 0.1f, c.y);
 }
 
 void logic_map_change() {
     if (input.check_key(SDLK_1, GZ_TAP)) {
-        sample_map = "sample";
-        vec2 c = resource->get<GeezMapData>(sample_map)->get_sector(0)->center;
+        current_map = "sample";
+        vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
         camera.position = vec3(c.x, 0.1f, c.y);
     }
     else if (input.check_key(SDLK_2, GZ_TAP)) {
-        sample_map = "centerHole";
-        vec2 c = resource->get<GeezMapData>(sample_map)->get_sector(0)->center;
+        current_map = "centerHole";
+        vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
         camera.position = vec3(c.x, 0.3f, c.y);
     }
     else if (input.check_key(SDLK_3, GZ_TAP)) {
-        sample_map = "stairs";
-        vec2 c = resource->get<GeezMapData>(sample_map)->get_sector(0)->center;
+        current_map = "stairs";
+        vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
         camera.position = vec3(c.x, 0.1f, c.y);
     }
     else if (input.check_key(SDLK_4, GZ_TAP)) {
-        sample_map = "hole_in_hole";
-        vec2 c = resource->get<GeezMapData>(sample_map)->get_sector(0)->center;
+        current_map = "hole_in_hole";
+        vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
         camera.position = vec3(c.x, 0.1f, c.y);
     }
     else if (input.check_key(SDLK_5, GZ_TAP)) {
-        sample_map = "map_editor";
-        vec2 c = resource->get<GeezMapData>(sample_map)->get_sector(0)->center;
+        current_map = "map_editor";
+        vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
         camera.position = vec3(c.x, 0.1f, c.y);
     }
 }
@@ -205,7 +206,7 @@ void logic_character_controller(GeezMapData* map) {
     // camera Vertcal collision
     bool isGrounded = false;
     const F32 gravity = 1.25f;
-    const F32 cameraHeight = 0.25f;
+    const F32 cameraHeight = 0.3f;
     const F32 gravForce = gravity * delta_time;
     const F32 cameraGroundY = (camera.position.y - cameraHeight);
     vec2 camPosXZ = vec2(camera.position.x, camera.position.z);
@@ -224,11 +225,9 @@ void logic_character_controller(GeezMapData* map) {
             }
         }
 
-        // With smooth snapping
         if (foundSector) {
             if (cameraGroundY - gravForce <= bestFloor) {
                 camera.position.y = (bestFloor + cameraHeight);
-                // camera.position.y = Geez::lerp(camera.position.y, (bestFloor + cameraHeight), delta_time * 15);
                 isGrounded = true;
             }
         }
@@ -262,11 +261,20 @@ void logic_character_controller(GeezMapData* map) {
                 const sector_t *sb = map->get_sector(wall.connected_sectors[1]);
 
                 if (sa && sb) {
-                    const F32 sfDiff = abs(sa->floor_height - sb->floor_height);
-                    if (max(sa->floor_height, sb->floor_height) < cameraGroundY + 0.005f) 
-                        continue; // Steppng down
-                    else if (sfDiff <= heightStepThreshold)
-                        continue; // stepping up scenario
+                    const F32 sfDiff        = abs(sa->floor_height - sb->floor_height);
+                    const F32 highest_floor = max(sa->floor_height, sb->floor_height);
+                    const F32 lowest_ceil   = min(sa->ceil_height,  sb->ceil_height);
+                    const F32 gap           = abs(highest_floor - lowest_ceil); 
+
+                    // Bypass collision checking upon these conditions
+                    // Gap between max_floor and min_ceil is greater than or equal to the  object_height 
+                    if (gap >= cameraHeight)
+                    {
+                        if (highest_floor < (cameraGroundY + 0.005f) && sector.floor_height < lowest_ceil) 
+                            continue; // Stepping down
+                        else if (sfDiff <= heightStepThreshold)
+                            continue; // stepping up scenario
+                    }
                 }
             }
 
@@ -291,7 +299,7 @@ void update()
 {   
     // Change Map
     logic_map_change();
-    GeezMapData* map_data = resource->get<GeezMapData>(sample_map);
+    GeezMapData* map_data = resource->get<GeezMapData>(current_map);
 
     // Toggle Mouse cursor visibility
     if (input.check_key(SDLK_ESCAPE, GZ_TAP)) {
@@ -301,25 +309,26 @@ void update()
 
     logic_character_controller(map_data);
 
-    // Light movement (arrow keys)
-    const F32 lightSpd = 1.25f * delta_time;
-    if (input.check_key(SDLK_UP, GZ_HOLD))    light_pos.z += lightSpd;  // forward
-    if (input.check_key(SDLK_DOWN, GZ_HOLD))  light_pos.z -= lightSpd;  // backward
-    if (input.check_key(SDLK_LEFT, GZ_HOLD))  light_pos.x -= lightSpd;  // left
-    if (input.check_key(SDLK_RIGHT, GZ_HOLD)) light_pos.x += lightSpd;  // right
+    // Spawn physics balls in front of camera
+    if (input.check_mouse_left(GZ_TAP) && !input.check_key(SDLK_LSHIFT, GZ_HOLD)) {
+        GameObject* ball = nullptr;
+        if ((ball = entities->get("Ball"))) {
+            entities->destroy("Ball");
+        }
 
-    // Optional vertical control
-    if (input.check_key(SDLK_K, GZ_HOLD)) light_pos.y += lightSpd;
-    if (input.check_key(SDLK_L, GZ_HOLD)) light_pos.y -= lightSpd;
-
-    // Move sun gameobject to actual lightPosition
-    entities->get("LightSource")->position = light_pos;
+        ball = entities->create("Ball");
+        if (ball){
+            ball->position = camera.position + (camera.axis_forward() * 0.2f);
+            ball->scale = vec3(0.1f, 0.1f, 1.0f);
+            entities->attach_physics_component(ball->id());
+        }
+    }
 
     {   // ============= TEMP ============= //
         // Example of moving a sector by floor height
         // Left mouse means a positive addition
         // Moving a floor will not move it's height
-        if (map_data->get_sector(1) != nullptr) {       
+        if (map_data->get_sector(1) != nullptr && input.check_key(SDLK_LSHIFT, GZ_HOLD)) {       
             F32 add = 0.5f;
             map_data->get_sector(1)->floor_height += (
                 (input.check_mouse_left(GZ_HOLD) - input.check_mouse_right(GZ_HOLD)) * add
@@ -351,25 +360,28 @@ void render()
     }
     
     // Gameobjects
-    renderer->submit_map_geometry(*resource->get<GeezMapData>(sample_map));
+    renderer->submit_map_geometry(*resource->get<GeezMapData>(current_map));
     for (const GameObject* object : *entities) {
-        RenderDataGameobject_t data;
-        data.shader_id      = object->shader_id;
-        data.texture_ids[0] = object->texture_id;
-        data.position       = object->position;
-        data.rotation       = object->rotation;
-        data.scale          = object->scale;
-        renderer->submit(std::make_unique<RenderDataGameobject_t>(data));
+        renderer->submit(std::make_unique<RenderDataGameobject_t>([&]{
+            RenderDataGameobject_t d{};
+            d.shader_id      = object->shader_id;
+            d.texture_ids[0] = object->texture_id;
+            d.position       = object->position;
+            d.scale          = object->scale;
+            return d;
+        }()));
     }
 
     // Crosshair
-    RenderDataGUI_t crosshair;
-    crosshair.shader_id      = unlit_shader_name;
-    crosshair.texture_ids[0] = "Crosshair";
-    crosshair.screen_pos     = vec2(0, 0);
-    crosshair.angle          = 0;
-    crosshair.size           = vec2(25.0f);
-    renderer->submit(std::make_unique<RenderDataGUI_t>(crosshair));
+    renderer->submit(std::make_unique<RenderDataGUI_t>([&]{
+        RenderDataGUI_t d{};
+        d.shader_id      = unlit_shader_name;
+        d.texture_ids[0] = "Crosshair";
+        d.screen_pos     = vec2(0, 0);
+        d.angle          = 0;
+        d.size           = vec2(25.0f);
+        return d;
+    }()));
 
     // Done
     renderer->flush();
@@ -405,6 +417,7 @@ int main()
 
         camera.update();
         update();
+        physics.update(*entities, *resource->get<GeezMapData>(current_map), delta_time);
         render();
         
         // runtime FPS Calculation

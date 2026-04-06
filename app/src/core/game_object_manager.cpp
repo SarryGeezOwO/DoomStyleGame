@@ -2,7 +2,22 @@
 #include "util/log.hpp"
 #include <glm/glm.hpp>
 
-Geez::GameObject* Geez::GameObjectManager::create(const InstanceID &id)
+void Geez::GameObjectManager::attach_physics_component(const InstanceID &id)
+{
+    GameObject* obj = get(id);
+    if (obj) {
+        obj->physics = new physics_component_t(obj);
+        obj->physics->position          = obj->position;
+        obj->physics->height            = obj->scale.y;
+        obj->physics->collision_radius  = 0.05f;
+        obj->physics->step_height       = 0.0f;
+    }
+    else {
+        GZ_LOG(GZ_FAIL, "Cannot attach physics component to nullptr GameObject");
+    }
+}
+
+Geez::GameObject *Geez::GameObjectManager::create(const InstanceID &id)
 {
     if (m_game_objects.find(id) != m_game_objects.end()) {
         GZ_LOG(GZ_FAIL, "GameObject [%s] already existed", id.c_str()); 

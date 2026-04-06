@@ -144,10 +144,15 @@ void Geez::RenderStrategyGameobject::execute(IRenderData &data, const RenderCont
         return;
     }
 
+    mat4 camRot = mat4(1.0f);
+    camRot[0] = vec4( context.active_camera->axis_right(),    0);
+    camRot[1] = vec4( vec3(0, 1, 0),                          0);
+    camRot[2] = vec4(-context.active_camera->axis_forward(),  0);
+
     Mesh* mesh = context.meshes->get("QUAD");
     mat4 model =  mat4(1.0f);
         model =  translate(model, object.position);
-        model *= make_rotation_from_quaternion(object.rotation);
+        model *= camRot;
         model =  scale(model, object.scale);
 
     mesh->bind();

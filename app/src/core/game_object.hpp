@@ -21,8 +21,8 @@ namespace Geez
 
     public:
         physics_component_t* physics = nullptr; // instantiated with 'new'
+        
         glm::vec3 position;
-        glm::vec3 rotation;
         glm::vec3 scale;
         
         ResourceID texture_id;
@@ -31,7 +31,7 @@ namespace Geez
         GameObject() = delete; 
         
         GameObject(const InstanceID& name) 
-            : m_id(name), position(0), rotation(0), scale(1.0f) {}
+            : m_id(name), position(0), scale(1.0f) {}
         
         ~GameObject() {
             delete physics;

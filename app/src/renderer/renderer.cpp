@@ -67,13 +67,16 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
 
             auto r_wall_data = [&]{
                 RenderDataWall_t d{};
-                d.debug_line     = true;
                 d.flipped        = false;
                 d.shader_id      = lit_shader;
                 d.texture_ids[0] = wall.texture_id;
                 d.ref_center     = sector.center;
                 d.a              = point_a;
                 d.b              = point_b;
+            #ifdef GZ_BUILD_DEBUG
+                d.debug_is_floor = true;
+                d.debug_is_ceil  = true;
+            #endif
                 return d;
             }();
 
@@ -117,6 +120,10 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
                 r_wall_data.yBottom    = min_floor;
                 r_wall_data.yTop       = max_floor;
                 r_wall_data.ref_center = (hole_present) ? center_hole : floor_look;
+            #ifdef GZ_BUILD_DEBUG
+                r_wall_data.debug_is_floor = true;
+                r_wall_data.debug_is_ceil  = false;
+            #endif
                 if (hole_present) {
                     r_wall_data.flipped = (sector.is_hole) ? 
                         (max_floor == sector.floor_height)
@@ -129,6 +136,10 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
                 r_wall_data.yBottom    = min_ceil;
                 r_wall_data.yTop       = max_ceil;
                 r_wall_data.ref_center = (hole_present) ? center_hole : ceil_look;
+            #ifdef GZ_BUILD_DEBUG
+                r_wall_data.debug_is_floor = false;
+                r_wall_data.debug_is_ceil  = true;
+            #endif
                 if (hole_present) {
                     r_wall_data.flipped = (sector.is_hole) ? 
                         (min_ceil == sector.ceil_height)
@@ -159,9 +170,11 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
         
         // Don't ask why this debug_line is in here
         // as opposed to being in render_strategy.cpp
-        vec3 WORLD_UP = vec3(0,1,0);
-        GZ_DEBUG_DRAW_RAY(*context.get(), vec3(sector.center.x, sector.floor_height, sector.center.y),  WORLD_UP, 0.075f, 3);
-        GZ_DEBUG_DRAW_RAY(*context.get(), vec3(sector.center.x, sector.ceil_height,  sector.center.y), -WORLD_UP, 0.075f, 3);
+        #ifdef GZ_BUILD_DEBUG
+            vec3 WORLD_UP = vec3(0,1,0);
+            GZ_DEBUG_DRAW_RAY(*context.get(), vec3(sector.center.x, sector.floor_height, sector.center.y),  WORLD_UP, 0.075f, 3);
+            GZ_DEBUG_DRAW_RAY(*context.get(), vec3(sector.center.x, sector.ceil_height,  sector.center.y), -WORLD_UP, 0.075f, 3);
+        #endif
     }
 }
 

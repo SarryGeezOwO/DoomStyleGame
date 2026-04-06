@@ -1,5 +1,6 @@
 #include "physics.hpp"
 #include "util/geometry_util.hpp"
+#include "util/utility.hpp"
 
 using namespace glm;
 namespace Geez
@@ -62,6 +63,7 @@ namespace Geez
     void PhysicsSystem::horizontal_collision(physics_component_t &obj, const GeezMapData &map) const
     {
         const vec2 posXZ    = vec2(obj.position.x, obj.position.z);
+        const F32  posY     = obj.position.y;
 
         for (const sector_t& sector : map.get_sectors()) {
             bool isCameraInSector = is_point_in_sector(posXZ, sector);
@@ -77,19 +79,23 @@ namespace Geez
                     const sector_t *sa = map.get_sector(wall.connected_sectors[0]);
                     const sector_t *sb = map.get_sector(wall.connected_sectors[1]);
 
-                    if (sa && sb) {
+                    if (sa && sb) { 
                         const F32 sfDiff = abs(sa->floor_height - sb->floor_height);
-                        const F32 highest_floor = max(sa->floor_height, sb->floor_height);
-                        const F32 lowest_ceil   = min(sa->ceil_height,  sb->ceil_height);
-                        const F32 gap = abs(highest_floor - lowest_ceil); 
+                        const F32 hf     = max(sa->floor_height, sb->floor_height);
+                        const F32 lf     = min(sa->floor_height, sb->floor_height);
+                        const F32 lc     = min(sa->ceil_height,  sb->ceil_height);
+                        const F32 hc     = max(sa->ceil_height,  sb->ceil_height);
+                        const F32 gap    = abs(hf - lc); 
+                        const bool wall_check_f = !number_in_range(posY - ((obj.height * 0.5f) - 0.02f), lf, hf);
+                        const bool wall_check_c = !number_in_range(posY + ((obj.height * 0.5f) - 0.02f), lc, hc);
 
                         // Bypass collision checking upon these conditions
                         // Gap between max_floor and min_ceil is greater than or equal to the  object_height 
                         if (gap >= obj.height)
                         {
-                            if (highest_floor < obj.position.y && sector.floor_height < lowest_ceil) 
+                            if (hf <= posY && wall_check_c) 
                                 continue; // Stepping down
-                            else if (sfDiff <= obj.step_height)
+                            else if (sfDiff <= obj.step_height && wall_check_f)
                                 continue; // stepping up scenario
                         }
                     }

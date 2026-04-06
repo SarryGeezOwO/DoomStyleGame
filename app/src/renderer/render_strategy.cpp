@@ -80,11 +80,12 @@ void Geez::RenderStrategyWall::execute(IRenderData &data, const RenderContext &c
     GL(glDrawElements(mesh->draw_mode, mesh->index_count(), GL_UNSIGNED_INT, nullptr));
     context.meshes->unbind();
 
-    if (wall.debug_line) {
+    #ifdef GZ_BUILD_DEBUG
         const vec3 line_center = vec3(mid.x, wall.yBottom + (height*0.5f), mid.y);
         const vec3 line_dir = vec3(dir.y * -sign(facing), 0, dir.x * sign(facing));
-        GZ_DEBUG_DRAW_RAY(context, line_center, line_dir, 0.075f, 3, Color3f(1,1,0));
-    }
+        const Color3f color = Color3f(wall.debug_is_ceil, 0, wall.debug_is_floor);
+        GZ_DEBUG_DRAW_RAY(context, line_center, line_dir, 0.075f, 3, color);
+    #endif
 }
 
 void Geez::RenderStrategySector::execute(IRenderData &data, const RenderContext &context)

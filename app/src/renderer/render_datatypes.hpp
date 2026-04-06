@@ -52,7 +52,11 @@ namespace Geez
         F32 yBottom; 
         F32 yTop;
         bool flipped;
-        bool debug_line;
+
+        #ifdef GZ_BUILD_DEBUG
+            bool debug_is_floor;
+            bool debug_is_ceil;
+        #endif
     };
 
     struct RenderDataSector_t : IRenderData {

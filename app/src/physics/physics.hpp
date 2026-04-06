@@ -12,13 +12,18 @@ namespace Geez
     struct PhysicsSystem {
     private:
         void apply_gravity(physics_component_t& obj) const;
+        void integrate_force(physics_component_t& obj) const;
         void vertical_collision(physics_component_t& obj,   const GeezMapData& map) const;
         void horizontal_collision(physics_component_t& obj, const GeezMapData& map) const;
         void apply_velocity(physics_component_t& obj) const;
+        void apply_friction(physics_component_t& obj) const;
 
     public:
         F32 gravity;
+
         void update(GameObjectManager& manager, const GeezMapData& map, float dt);
+        void add_force(GameObjectManager& manager, const InstanceID& id, const glm::vec3& force);
+        void add_impulse_force(GameObjectManager& manager, const InstanceID& id, const glm::vec3& force);
     };
 }
 

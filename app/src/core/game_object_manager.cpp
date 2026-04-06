@@ -7,8 +7,12 @@ void Geez::GameObjectManager::attach_physics_component(const InstanceID &id)
     GameObject* obj = get(id);
     if (obj) {
         obj->physics = new physics_component_t(obj);
-        obj->physics->collision_radius  = 0.05f;
+
+        // Defaults
+        obj->physics->collision_radius  = 0.1f;
         obj->physics->step_height       = 0.0f;
+        obj->physics->mass              = 1.0f;
+        obj->physics->friction          = 0.1f;
     }
     else {
         GZ_LOG(GZ_FAIL, "Cannot attach physics component to nullptr GameObject");

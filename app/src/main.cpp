@@ -87,7 +87,7 @@ void init() {
     // Sub Systems
     window->set_cursor_visible(false);
 
-    physics.gravity = -0.65f;
+    physics.gravity = -9.8f; // Real!!!
     renderer  = std::make_unique<Renderer>();
     audio     = std::make_unique<AudioPlayer>(MAX_MIXER_CHANNEL);
     entities  = std::make_unique<GameObjectManager>();
@@ -150,6 +150,7 @@ void start()
     player->physics->height             = 0.3f;
     player->physics->collision_radius   = 0.05f;
     player->physics->step_height        = 0.125f;
+    player->physics->friction           = 0.0f;
 
     // Sun
     auto instance1 = entities->create("LightSource", unlit_shader_name, "sun");
@@ -191,7 +192,7 @@ void logic_map_change() {
 
 void logic_character_controller(GeezMapData* map) {
     // Camera movement
-    F32 moveSpd = 1.25f;
+    F32 moveSpd = 1.5f;
     glm::vec3 moveDir(0.0f);
     const vec3 camForwardZX = camera.axis_forward() * vec3(1, 0, 1);
 
@@ -216,7 +217,8 @@ void logic_character_controller(GeezMapData* map) {
 
     // Player is guranteed to have physics component anyways,
     // so no need to check for physics_component_t presence
-    player->physics->velocity = (moveDir * moveSpd);
+    player->physics->velocity.x = (moveDir.x * moveSpd);
+    player->physics->velocity.z = (moveDir.z * moveSpd);
 }
 
 void update()
@@ -243,11 +245,11 @@ void update()
         ball = entities->create("Ball");
         if (ball){
             entities->attach_physics_component(ball->id());
-            ball->position = camera.position + (camera.axis_forward() * 0.2f);
+            ball->position = camera.position + (camera.axis_forward() * 0.1f);
             ball->scale = vec3(0.1f, 0.1f, 1.0f);
             ball->physics->height       = 0.1f;
-            ball->physics->step_height  = 0.0f;
-            ball->physics->collision_radius = 0.05f;
+            ball->physics->mass         = 1.0f;
+            physics.add_impulse_force(*entities, ball->id(), camera.axis_forward() * 3.0f);
         }
     }
 

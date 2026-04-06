@@ -17,8 +17,17 @@ namespace Geez
     void PhysicsSystem::apply_gravity(physics_component_t &obj) const
     {
         if (!obj.grounded) {
-            obj.position.y += gravity * delta_time;
+            obj.force.y += gravity * obj.mass;
         }
+    }
+
+    void PhysicsSystem::integrate_force(physics_component_t &obj) const
+    {
+        if (obj.mass <= 0.0f) return;
+
+        vec3 acceleration = obj.force / obj.mass;
+        obj.velocity += acceleration * delta_time;
+        obj.force = vec3(0.0f);
     }
 
     void PhysicsSystem::vertical_collision(physics_component_t &obj, const GeezMapData &map) const
@@ -42,7 +51,7 @@ namespace Geez
         }
 
         if (foundSector) {
-            if (groundY <= bestFloor) {
+            if (groundY - 0.025f <= bestFloor) {
                 obj.position.y = (bestFloor + (obj.height * 0.5f));
                 obj.velocity.y = 0;
                 obj.grounded = true;
@@ -98,6 +107,8 @@ namespace Geez
                     F32 penetration = obj.collision_radius - dist;
                     obj.position.x += pushDir.x * penetration;
                     obj.position.z += pushDir.y * penetration;
+                    obj.velocity.x = 0;
+                    obj.velocity.z = 0;
                 }
             }   
         }
@@ -108,17 +119,44 @@ namespace Geez
         obj.position += obj.velocity * delta_time;
     }
 
+    void PhysicsSystem::apply_friction(physics_component_t &obj) const
+    {
+        if (!obj.grounded) return;
+        const F32 f = (1.0f - obj.friction);
+        obj.velocity.x *= f;
+        obj.velocity.z *= f;
+    }
+
     void PhysicsSystem::update(GameObjectManager &manager, const GeezMapData &map, float dt) {
 
         delta_time = dt;
         for (GameObject* obj : manager) {
-            if (!obj->physics) continue;
-            obj->physics->position = obj->position;
-            apply_gravity(*obj->physics);
-            vertical_collision(*obj->physics, map);
-            apply_velocity(*obj->physics);
-            horizontal_collision(*obj->physics, map);
-            obj->position = obj->physics->position;
+            physics_component_t* p_comp = obj->physics;
+
+            if (!p_comp) continue;
+            p_comp->position = obj->position;
+            apply_gravity       (*p_comp);
+            integrate_force     (*p_comp);
+            vertical_collision  (*p_comp, map);
+            apply_velocity      (*p_comp);
+            apply_friction      (*p_comp);
+            horizontal_collision(*p_comp, map);
+            obj->position = p_comp->position;
+        }
+    }
+
+    void PhysicsSystem::add_force(GameObjectManager &manager, const InstanceID &id, const vec3 &force)
+    {
+        if (manager.get(id)->physics) {
+            manager.get(id)->physics->force += force;
+        }
+    }
+
+    void PhysicsSystem::add_impulse_force(GameObjectManager &manager, const InstanceID &id, const vec3 &force)
+    {
+        physics_component_t* p = manager.get(id)->physics;
+        if (p) {
+            p->velocity += force / p->mass;
         }
     }
 }

@@ -13,6 +13,10 @@ namespace Geez
 
         glm::vec3 position{};
         glm::vec3 velocity{};
+        glm::vec3 force{};
+        F32 mass;
+        F32 friction;
+
         F32 collision_radius;
         F32 step_height;
         F32 height;

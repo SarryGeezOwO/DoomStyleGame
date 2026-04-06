@@ -34,10 +34,10 @@ namespace Geez
     void PhysicsSystem::vertical_collision(physics_component_t &obj, const GeezMapData &map) const
     {
         obj.grounded = false;
-        const F32 groundY   = (obj.position.y - (obj.height * 0.5f));
-        const vec2 posXZ    = vec2(obj.position.x, obj.position.z);
-        F32 bestFloor       = -1000000.0f;
-        bool foundSector    = false;
+        const F32 botY   = (obj.position.y - (obj.height * 0.5f));
+        const F32 topY   = (obj.position.y + (obj.height * 0.5f));
+        const vec2 posXZ = vec2(obj.position.x, obj.position.z);
+        const sector_t *bestSector = nullptr;
 
         // =============== Vertical collision SCOPE =============== //
         for (const sector_t& sector : map.get_sectors()) {
@@ -45,17 +45,25 @@ namespace Geez
             if (!isInside) continue;
 
             // Get the highest floor sector on your standig point
-            if (sector.floor_height > bestFloor) {
-                bestFloor   = sector.floor_height;
-                foundSector = true;
+            // And get that ceil as well
+            if (bestSector) {
+                if (sector.floor_height > bestSector->floor_height)
+                    bestSector = &sector;
             }
+            else bestSector = &sector;
         }
 
-        if (foundSector) {
-            if (groundY - 0.025f <= bestFloor) {
-                obj.position.y = (bestFloor + (obj.height * 0.5f));
+        if (bestSector) {
+
+            // Floor
+            if (botY - 0.01f <= bestSector->floor_height) {
+                obj.position.y = (bestSector->floor_height + (obj.height * 0.5f));
                 obj.velocity.y = 0;
                 obj.grounded = true;
+            }
+            else if ((topY + obj.velocity.y * delta_time) > bestSector->ceil_height) {
+                obj.position.y = (bestSector->ceil_height - (obj.height * 0.5f));
+                obj.velocity.y = 0;
             }
         }
     }
@@ -128,7 +136,7 @@ namespace Geez
     void PhysicsSystem::apply_friction(physics_component_t &obj) const
     {
         if (!obj.grounded) return;
-        const F32 f = (1.0f - obj.friction);
+        const F32 f = (1.0f - clamp(obj.friction, 0.0f, 1.0f));
         obj.velocity.x *= f;
         obj.velocity.z *= f;
     }

@@ -249,7 +249,7 @@ void update()
             ball->scale = vec3(0.1f, 0.1f, 1.0f);
             ball->physics->height       = 0.1f;
             ball->physics->mass         = 1.0f;
-            physics.add_impulse_force(*entities, ball->id(), camera.axis_forward() * 3.0f);
+            physics.add_impulse_force(*entities, ball->id(), camera.axis_forward() * 4.0f);
         }
     }
 

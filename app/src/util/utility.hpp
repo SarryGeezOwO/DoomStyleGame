@@ -73,6 +73,6 @@ namespace Geez
     }
 
     inline bool number_in_range(F32 x, F32 min, F32 max) {
-        return (x == SDL_clamp(x, min, max));
+        return (x == std::clamp(x, min, max));
     }
 }

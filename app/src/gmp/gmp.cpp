@@ -177,6 +177,16 @@ Geez::GeezMapData::GeezMapData(const std::string &file)
             }
         }
     }
+
+    // Sort walls, sectors by ID from smallest to highest
+    // For faster lookup
+    std::sort(walls.begin(), walls.end(), [](const auto& a, const auto& b) {
+        return a.id < b.id;
+    });
+
+    std::sort(sectors.begin(), sectors.end(), [](const auto& a, const auto& b) {
+        return a.id < b.id;
+    });
 }
 
 Geez::GeezMapData::~GeezMapData()
@@ -255,44 +265,52 @@ bool Geez::GeezMapData::is_sector_scary(U32 sector_id, U32 wall_id)
 
 Geez::wall_t *Geez::GeezMapData::get_wall(U32 wall_id)
 {
-    for (wall_t& wall : walls) {
-        if (wall.id == wall_id) {
-            return &wall;
-        }
-    }
+    auto it = std::lower_bound(walls.begin(), walls.end(), wall_id, [](const wall_t& wall, U32 id){
+        return wall.id < id;
+    });
+
+    if (it != walls.end() && it->id == wall_id)
+        return &(*it);
+
     GZ_LOG(GZ_FAIL, "Unknown Wall [ID: %d]", wall_id);
     return nullptr;
 }
 
 const Geez::wall_t *Geez::GeezMapData::get_wall(U32 wall_id) const
 {
-    for (const wall_t& wall : walls) {
-        if (wall.id == wall_id) {
-            return &wall;
-        }
-    }
+    auto it = std::lower_bound(walls.begin(), walls.end(), wall_id, [](const wall_t& wall, U32 id){
+        return wall.id < id;
+    });
+
+    if (it != walls.end() && it->id == wall_id)
+        return &(*it);
+
     GZ_LOG(GZ_FAIL, "Unknown Wall [ID: %d]", wall_id);
     return nullptr;
 }
 
 Geez::sector_t *Geez::GeezMapData::get_sector(U32 sector_id)
 {
-    for (sector_t& sector : sectors) {
-        if (sector.id == sector_id) {
-            return &sector;
-        }
-    }
+    auto it = std::lower_bound(sectors.begin(), sectors.end(), sector_id, [](const sector_t& wall, U32 id){
+        return wall.id < id;
+    });
+
+    if (it != sectors.end() && it->id == sector_id)
+        return &(*it);
+
     GZ_LOG(GZ_FAIL, "Unknown Sector [ID: %d]", sector_id);
     return nullptr;
 }
 
 const Geez::sector_t *Geez::GeezMapData::get_sector(U32 sector_id) const
 {
-    for (const sector_t& sector : sectors) {
-        if (sector.id == sector_id) {
-            return &sector;
-        }
-    }
+    auto it = std::lower_bound(sectors.begin(), sectors.end(), sector_id, [](const sector_t& wall, U32 id){
+        return wall.id < id;
+    });
+
+    if (it != sectors.end() && it->id == sector_id)
+        return &(*it);
+
     GZ_LOG(GZ_FAIL, "Unknown Sector [ID: %d]", sector_id);
     return nullptr;
 }

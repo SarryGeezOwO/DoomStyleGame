@@ -271,15 +271,14 @@ void update()
             ) * delta_time;
         }
 
-        // Raycasting (Super slow !!!)
-        if (input.check_key(SDLK_R, GZ_TAP)) {
+        // Raycasting (Super slow !!!)cls
+        if (input.check_key(SDLK_R, GZ_HOLD)) {
             const wall_t* hit_wall = nullptr;
             vec3 hitpoint;
 
             wall_raycast(camera.position, camera.axis_forward(), 10, *map_data, hitpoint, hit_wall);
             GameObject* decal = entities->get("Decal");
             decal->position = hitpoint;
-            GZ_LOG(GZ_WARNING, "Hitpoint: %.2f | %.2f | %.2f", hitpoint.x, hitpoint.y, hitpoint.z);
         }
 
         if (input.check_key(SDLK_SPACE, GZ_TAP)) {

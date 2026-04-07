@@ -121,8 +121,10 @@ namespace Geez
                     F32 penetration = obj.collision_radius - dist;
                     obj.position.x += pushDir.x * penetration;
                     obj.position.z += pushDir.y * penetration;
-                    obj.velocity.x = 0;
-                    obj.velocity.z = 0;
+
+                    const F32 f = (1.0f - clamp(obj.friction * 0.5f, 0.0f, 1.0f));
+                    obj.velocity.x *= f;
+                    obj.velocity.z *= f;
                 }
             }   
         }

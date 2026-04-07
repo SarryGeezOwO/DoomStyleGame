@@ -10,8 +10,9 @@ namespace Geez
     struct GeezMapData : IResource 
     {
     private:
-        std::vector<wall_t> walls;
-        std::vector<sector_t> sectors;
+        std::vector<wall_t>     walls;
+        std::vector<sector_t>   sectors;
+        std::unordered_map<U32, decal_t>     decals;
         std::unordered_map<U32, std::string> texture_references;
         std::unordered_map<U32, std::shared_ptr<sector_mesh_t>> sector_meshes; // Sector_id
 

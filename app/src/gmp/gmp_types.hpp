@@ -15,6 +15,16 @@ namespace Geez
 {
     using Point_t = std::array<F32, 2>;
     using Polygon_t = std::vector<Point_t>;
+    // Haha, batman, you cannnot stop me from writing bad code 🗿🗿
+
+    struct decal_t {
+        U32 id;
+        glm::vec2 position;
+        glm::vec2 size;
+        ResourceID texture_id = "DefaultTexture";
+        U32 id_attached_to;
+        bool id_space_wall;
+    };
 
     struct wall_t {
         U32 id;
@@ -22,7 +32,7 @@ namespace Geez
         Point_t point_b;
         bool is_portal;
         ResourceID texture_id = "Wall";
-        std::array<I32, 2> connected_sectors = {-1, -1};
+        std::array<I32, 2> connected_sectors = {-1, -1}; // Ids of SectorA, SectorB
 
     friend struct GeezMapData;
     protected: // Used for buffer generation

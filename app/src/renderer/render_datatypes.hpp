@@ -15,7 +15,7 @@
 */
 
 // Not including R_NONE
-#define GZ_RENDER_TYPES_COUNT 4
+#define GZ_RENDER_TYPES_COUNT 5
 
 namespace Geez
 {
@@ -23,6 +23,7 @@ namespace Geez
         R_NONE = -1,    // Skipped at rendering
         R_WALL, 
         R_SECTOR,
+        R_DECAL,
         R_GAMEOBJECT,
         R_GUI           // Not including Texts
     };
@@ -67,6 +68,18 @@ namespace Geez
         F32 ceil;
         std::weak_ptr<sector_mesh_t> mesh;
         // texture   0-floor   1-ceil
+
+        #ifdef GZ_BUILD_DEBUG
+            glm::vec2 center;
+        #endif
+    };
+
+    struct RenderDataDecal_t : IRenderData {
+        RenderDataDecal_t() { type = R_DECAL; }
+        
+        glm::vec3 position;
+        glm::vec3 normal;
+        glm::vec2 scale;
     };
 
     struct RenderDataGameobject_t : IRenderData {

@@ -135,6 +135,19 @@ void Geez::RenderStrategySector::execute(IRenderData &data, const RenderContext 
     GL(glDrawElements(GL_TRIANGLES, sector.index_count, GL_UNSIGNED_INT, nullptr));
 
     context.meshes->unbind();
+
+    #ifdef GZ_BUILD_DEBUG
+        const vec3 WORLD_UP = vec3(0,1,0);
+        const vec3 floorC = vec3(sector.center.x, sector.floor, sector.center.y);
+        const vec3 ceilC  = vec3(sector.center.x, sector.ceil,  sector.center.y);
+        GZ_DEBUG_DRAW_RAY(context, floorC,  WORLD_UP, 0.075f, 3);
+        GZ_DEBUG_DRAW_RAY(context, ceilC,  -WORLD_UP, 0.075f, 3);
+    #endif
+}
+
+void Geez::RenderStrategyDecal::execute(IRenderData &data, const RenderContext &context)
+{
+    GZ_LOG(GZ_FAIL, "WHAT THE FUCK IS WRONG!!");
 }
 
 void Geez::RenderStrategyGameobject::execute(IRenderData &data, const RenderContext &context)

@@ -152,6 +152,10 @@ void start()
     player->physics->step_height        = 0.125f;
     player->physics->friction           = 0.0f;
 
+    // Decal
+    auto decal = entities->create("Decal", unlit_shader_name, "Top");
+    decal->scale = vec3(0.2f, 0.2f, 1.0f);
+
     // Sun
     auto instance1 = entities->create("LightSource", unlit_shader_name, "sun");
     instance1->scale = vec3(0.2f, 0.2f, 1.0f);
@@ -265,6 +269,17 @@ void update()
             map_data->get_sector(1)->ceil_height += (
                 (input.check_mouse_left(GZ_HOLD) - input.check_mouse_right(GZ_HOLD)) * add
             ) * delta_time;
+        }
+
+        // Raycasting (Super slow !!!)
+        if (input.check_key(SDLK_R, GZ_TAP)) {
+            const wall_t* hit_wall = nullptr;
+            vec3 hitpoint;
+
+            wall_raycast(camera.position, camera.axis_forward(), 10, *map_data, hitpoint, hit_wall);
+            GameObject* decal = entities->get("Decal");
+            decal->position = hitpoint;
+            GZ_LOG(GZ_WARNING, "Hitpoint: %.2f | %.2f | %.2f", hitpoint.x, hitpoint.y, hitpoint.z);
         }
 
         if (input.check_key(SDLK_SPACE, GZ_TAP)) {

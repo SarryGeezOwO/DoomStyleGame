@@ -1,5 +1,6 @@
 #include "geometry_util.hpp"
 #include "common_types.hpp"
+#include "utility.hpp"
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <cmath>
@@ -129,5 +130,93 @@ namespace Geez
             }
         }
         return isInside;
+    }
+
+    bool wall_raycast(
+        const glm::vec3 &ray_origin, 
+        const glm::vec3 &ray_dir, 
+        F32 ray_length,
+        F32 floorY,
+        F32 ceilY,
+        const wall_t &wall,
+        glm::vec3 &out_hit)
+    {
+        const vec2 ra(ray_origin.x, ray_origin.z);
+        const vec2 rd(ray_dir.x, ray_dir.z);
+        const vec2 pa(wall.point_a[0], wall.point_a[1]);
+        const vec2 pb(wall.point_b[0], wall.point_b[1]);
+        
+        const vec2 line_dir = pb - pa;
+        const vec2 diff     = pa - ra;
+        vec2 hitpoint;
+        F32 hitY;
+
+        F32 denom = cross(rd, line_dir);
+
+        // Parallel
+        if (fabs(denom) < 0.0001f)
+            return false;
+
+        F32 t = cross(diff, line_dir) / denom;
+        F32 u = cross(diff, rd) / denom;
+        
+        if (t >= 0 && u >= 0 && u <= 1)
+        {
+            hitpoint = ra + rd * t;
+            hitY = ray_origin.y + ((hitpoint.x - ray_origin.x) / ray_dir.x) * ray_dir.y;
+
+            // Y in gap
+            if (wall.is_portal && number_in_range(hitY, floorY, ceilY)) {
+                return false;
+            }
+
+            out_hit.x = hitpoint.x;
+            out_hit.z = hitpoint.y;
+            out_hit.y = hitY;
+            return true;
+        }
+        return false;
+    }
+
+    // Meet the most shittiest raycaster of all programming!!!
+    bool wall_raycast(
+        const glm::vec3 &ray_origin, 
+        const glm::vec3 &ray_dir, 
+        F32 ray_length, 
+        const GeezMapData &map, 
+        glm::vec3 &out_hit,
+        const wall_t* out_wall
+    )
+    {
+        F32 smallest_dist = 1000000;
+        bool hit = false; 
+        for (const wall_t& w : map.get_walls()) {
+            const sector_t* sa = nullptr;
+            const sector_t* sb = nullptr;
+            F32 floorY = 0;
+            F32 ceilY  = 0;
+
+            if (w.is_portal) {
+                sa = map.get_sector(w.connected_sectors[0]);
+                sb = map.get_sector(w.connected_sectors[1]);
+            }
+            
+            if (sa && sb) {
+                floorY = max(sa->floor_height, sb->floor_height);
+                ceilY  = min(sa->ceil_height, sb->ceil_height);
+            }
+
+            vec3 closest_hit;
+            if (wall_raycast(ray_origin, ray_dir, ray_length, floorY, ceilY, w, closest_hit)) {
+                hit = true;
+
+                if (distance(ray_origin, closest_hit) < smallest_dist) {
+                    smallest_dist = distance(ray_origin, closest_hit);
+                    out_hit  = closest_hit;
+                    out_wall = &w;
+                }
+            }
+        }
+        return hit;
     }
 }

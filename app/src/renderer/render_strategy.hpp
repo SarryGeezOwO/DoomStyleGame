@@ -20,6 +20,10 @@ namespace Geez
         void execute(IRenderData& data, const RenderContext& context) override;
     };
 
+    struct RenderStrategyDecal : public IRenderStrategy {
+        void execute(IRenderData& data, const RenderContext& context) override;
+    };
+
     struct RenderStrategyGameobject : public IRenderStrategy {
         void execute(IRenderData& data, const RenderContext& context) override;
     };

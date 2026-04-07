@@ -1,6 +1,7 @@
 #ifndef GZ_GEOMETRY_UTIL_HPP
 #define GZ_GEOMETRY_UTIL_HPP
 
+#include "gmp/gmp.hpp"
 #include "gmp/gmp_types.hpp"
 #include <glm/glm.hpp>
 
@@ -65,6 +66,37 @@ namespace Geez
      * @return bool True if the point is inside the sector.
      */
     bool is_point_in_sector(const glm::vec2& posXZ, const sector_t& sector);
+
+    /**
+     * @brief Cast a ray and check if it hits any wall in the map.
+     *
+     * @param ray_origin glm::vec3: Starting point of the ray.
+     * @param ray_dir glm::vec3: Normalized ray direction.
+     * @param ray_length F32: Maximum ray distance.
+     * @param map GeezMapData: Map containing sectors and walls.
+     * @param out_hit glm::vec3&: Stores hit position if collision occurs.
+     * @param out_wall wall_t: Stores the constant wall ref if collision occurs.
+     * @return bool True if a wall was hit, false otherwise.
+     */
+    bool wall_raycast(
+        const glm::vec3& ray_origin, 
+        const glm::vec3& ray_dir, 
+        F32 ray_length, 
+        const GeezMapData& map, 
+        glm::vec3& out_hit,
+        const wall_t* out_wall
+    );
+
+    /**
+     * @brief Compute 2D cross product of two vectors.
+     *
+     * @param a glm::vec2: First vector.
+     * @param b glm::vec2: Second vector.
+     * @return F32 Signed cross product.
+     */
+    inline F32 cross(const glm::vec2& a, const glm::vec2& b) {
+        return a.x * b.y - a.y * b.x;
+    }
 }
 
 #endif

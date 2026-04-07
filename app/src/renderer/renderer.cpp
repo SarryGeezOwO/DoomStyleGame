@@ -44,6 +44,7 @@ Geez::Renderer::Renderer()
     // Load Strategies here
     strategies[R_WALL]       = std::make_unique<RenderStrategyWall>();
     strategies[R_SECTOR]     = std::make_unique<RenderStrategySector>();
+    strategies[R_DECAL]      = std::make_unique<RenderStrategyDecal>();
     strategies[R_GAMEOBJECT] = std::make_unique<RenderStrategyGameobject>();
     strategies[R_GUI]        = std::make_unique<RenderStrategyGUI>();
 }
@@ -165,16 +166,12 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
             d.ceil           = sector.ceil_height;
             d.mesh           = map.get_weak_sector_mesh(sector.id);
             d.index_count    = map.get_sector_mesh(sector.id)->ebo->count();
+
+        #ifdef GZ_BUILD_DEBUG
+            d.center = sector.center;
+        #endif
             return d;
         }()));
-        
-        // Don't ask why this debug_line is in here
-        // as opposed to being in render_strategy.cpp
-        #ifdef GZ_BUILD_DEBUG
-            vec3 WORLD_UP = vec3(0,1,0);
-            GZ_DEBUG_DRAW_RAY(*context.get(), vec3(sector.center.x, sector.floor_height, sector.center.y),  WORLD_UP, 0.075f, 3);
-            GZ_DEBUG_DRAW_RAY(*context.get(), vec3(sector.center.x, sector.ceil_height,  sector.center.y), -WORLD_UP, 0.075f, 3);
-        #endif
     }
 }
 
@@ -194,7 +191,7 @@ void Geez::Renderer::flush()
     }
 
     // Map rendering or something sorted by Render Category
-    // Wall -> Sector -> -> GameObject -> GUI
+    // Wall -> Sector -> Decal -> GameObject -> GUI
     std::sort(render_list.begin(), render_list.end(), [](const auto& a, const auto& b) 
     { return a->type < b->type; });
 
@@ -207,18 +204,16 @@ void Geez::Renderer::flush()
         switch(type) {
             case R_NONE: continue;
             case R_GUI: {
-                glDisable(GL_DEPTH_TEST);
-                GL(glClear(GL_DEPTH_BUFFER_BIT));
                 context->active_camera->orthographic(); 
                 break;
             }
             default: break;
         }
-        
         strategies[type]->execute(*data, *context.get());
     }
     render_list.clear();
     SDL_GL_SwapWindow(context->active_window->handle());
+    context->active_camera->perspective();
 }
 
 /* ====== DEBUG DRAWS ====== */

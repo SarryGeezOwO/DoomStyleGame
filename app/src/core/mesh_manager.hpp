@@ -24,7 +24,7 @@ namespace Geez
             // Required*
             QUAD,   //< A flat plane that expands on X and Y, origin at center  (required to render walls)
             LINE,   //< A line that stretches at Z, origin at point_A           (required by draw_ray, draw_line)
-            AXIS,   //< Three lines pointing to X,Y,Z (origin is obvious)       (required for drawing object origins)
+            DECAL,  //< A modified quad (required for rendering decals, duh)
 
 
             // Optionals
@@ -39,7 +39,7 @@ namespace Geez
 
         void create_quad();
         void create_line();
-        void create_axis();
+        void create_decal();
         void create_plane();
 
     public:

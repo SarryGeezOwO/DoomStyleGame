@@ -74,7 +74,7 @@ namespace Geez
      * @param ray_dir glm::vec3: Normalized ray direction.
      * @param ray_length F32: Maximum ray distance.
      * @param map GeezMapData: Map containing sectors and walls.
-     * @param out_hit glm::vec3&: Stores hit position if collision occurs.
+     * @param out_hit glm::vec3&: Stores hit position if collision occurs. (nullptr valid)
      * @param out_wall wall_t: Stores the constant wall ref if collision occurs.
      * @return bool True if a wall was hit, false otherwise.
      */
@@ -84,7 +84,7 @@ namespace Geez
         F32 ray_length, 
         const GeezMapData& map, 
         glm::vec3& out_hit,
-        const wall_t* out_wall
+        const wall_t*& out_wall
     );
 
     /**

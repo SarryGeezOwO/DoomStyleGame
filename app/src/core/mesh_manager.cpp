@@ -49,26 +49,25 @@ void Geez::MeshManager::create_line()
     GZ_LOG(GZ_SUCCESS, "Primitive Mesh [LINE] is created.");
 }
 
-void Geez::MeshManager::create_axis()
+void Geez::MeshManager::create_decal()
 {
-    // Vertex: X, Y, Z
-    F32 vertices[12] = {
-        0.0f, 0.0f, 0.0f,
-        1.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 1.0f
+    // Vertex: X, Y, Z   S, T
+    F32 vertices[32] = {
+        -0.1f, -0.1f, 0,    0.0f, 0.0f,
+         0.1f, -0.1f, 0,    1.0f, 0.0f,
+         0.1f,  0.1f, 0,    1.0f, 1.0f,
+        -0.1f,  0.1f, 0,    0.0f, 1.0f,
     };
-
     U32 indices[6] = {
-        0, 1, // X
-        0, 2, // Y
-        0, 3  // Z
+        0, 1, 2,   // first triangle
+        2, 3, 0    // second triangle
     };
 
     VertexBufferLayout layout;
     layout.push_attr<F32>(3, GL_FALSE);
-    create("AXIS", vertices, 12, indices, 6, layout, GL_LINES);
-    GZ_LOG(GZ_SUCCESS, "Primitive Mesh [AXIS] is created.");
+    layout.push_attr<F32>(2, GL_FALSE);
+    create("DECAL", vertices, 32, indices, 6, layout, GL_TRIANGLES);
+    GZ_LOG(GZ_SUCCESS, "Primitive Mesh [DECAL] is created.");
 }
 
 void Geez::MeshManager::create_plane()
@@ -109,9 +108,9 @@ Geez::MeshManager::MeshManager(std::vector<Geez::Internal::PrimitveMesh> &&primi
     Internal::Logger::increment_tab_level(1);
     for (auto p : primitives) {
         switch (p) {
-            case Internal::QUAD:  create_quad(); break;
-            case Internal::LINE:  create_line(); break;
-            case Internal::AXIS:  create_axis(); break;
+            case Internal::QUAD:  create_quad();  break;
+            case Internal::LINE:  create_line();  break;
+            case Internal::DECAL: create_decal(); break;
             case Internal::PLANE: create_plane(); break;
         }
     }

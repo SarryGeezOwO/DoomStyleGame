@@ -54,6 +54,7 @@ static PhysicsSystem physics{};
 // ================ TEMP ===================//
 
 vec3 light_pos = vec3(0, 1, 0);
+U32 sample_decal = 0;
 
 // =========================================//
 
@@ -96,7 +97,7 @@ void init() {
         std::vector<Internal::PrimitveMesh>{
             Internal::QUAD,
             Internal::LINE,
-            Internal::AXIS
+            Internal::DECAL
         }
     );
 
@@ -138,8 +139,11 @@ void onQuit()
 
 void start()
 {
+    // Decal
+    GeezMapData* map_data = resource->get<GeezMapData>(current_map);
+    
     // Center of sector ID 0
-    vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
+    vec2 c = map_data->get_sector(0)->center;
 
     // Player   
     player = entities->create("Player", unlit_shader_name, "DefaultTexture");
@@ -152,8 +156,8 @@ void start()
     player->physics->step_height        = 0.125f;
     player->physics->friction           = 0.0f;
 
-    // Decal
-    auto decal = entities->create("Decal", unlit_shader_name, "Top");
+    // Decal (GameObject)
+    auto decal = entities->create("Decal", unlit_shader_name, "DefaultTexture");
     decal->scale = vec3(0.2f, 0.2f, 1.0f);
 
     // Sun
@@ -275,10 +279,13 @@ void update()
         if (input.check_key(SDLK_R, GZ_HOLD)) {
             const wall_t* hit_wall = nullptr;
             vec3 hitpoint;
-
-            wall_raycast(camera.position, camera.axis_forward(), 10, *map_data, hitpoint, hit_wall);
+            
+            wall_raycast(camera.position, camera.axis_forward(), 10, *map_data, hitpoint, hit_wall); 
             GameObject* decal = entities->get("Decal");
-            decal->position = hitpoint;
+
+            if (decal && hit_wall) {
+                decal->position = hitpoint;
+            }
         }
 
         if (input.check_key(SDLK_SPACE, GZ_TAP)) {

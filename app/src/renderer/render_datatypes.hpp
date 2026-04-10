@@ -14,9 +14,6 @@
     Leave Texture_ID empty if no texture to use or whatever...
 */
 
-// Not including R_NONE
-#define GZ_RENDER_TYPES_COUNT 5
-
 namespace Geez
 {
     enum RenderType {
@@ -25,7 +22,8 @@ namespace Geez
         R_SECTOR,
         R_DECAL,
         R_GAMEOBJECT,
-        R_GUI           // Not including Texts
+        R_GUI,          // Not including Texts
+        R_RENDER_TYPE_COUNT
     };
 
     // pure Virtual
@@ -79,7 +77,7 @@ namespace Geez
         
         glm::vec3 position;
         glm::vec3 normal;
-        glm::vec2 scale;
+        glm::vec2 size;
     };
 
     struct RenderDataGameobject_t : IRenderData {

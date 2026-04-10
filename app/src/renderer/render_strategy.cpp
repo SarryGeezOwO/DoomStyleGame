@@ -133,7 +133,6 @@ void Geez::RenderStrategySector::execute(IRenderData &data, const RenderContext 
         uv_scale
     );
     GL(glDrawElements(GL_TRIANGLES, sector.index_count, GL_UNSIGNED_INT, nullptr));
-
     context.meshes->unbind();
 
     #ifdef GZ_BUILD_DEBUG
@@ -147,7 +146,29 @@ void Geez::RenderStrategySector::execute(IRenderData &data, const RenderContext 
 
 void Geez::RenderStrategyDecal::execute(IRenderData &data, const RenderContext &context)
 {
-    GZ_LOG(GZ_FAIL, "WHAT THE FUCK IS WRONG!!");
+    const RenderDataDecal_t& decal = static_cast<RenderDataDecal_t&>(data);
+    if (!context.meshes->exists("DECAL")) {
+        GZ_LOG_FORCE(GZ_FAIL, "Cannot draw decal, no decal mesh available.");
+        return;
+    }
+
+    Mesh* mesh = context.meshes->get("DECAL");
+    mat4 model = mat4(1.0f);
+        model  = translate(model, decal.position + decal.normal * 0.01f);
+        model *= make_rotation_from_direction(decal.normal);
+        model  = scale(model, vec3(decal.size.x, decal.size.y, 1.0f));
+
+    mesh->bind();
+    bind(
+        context,
+        model,
+        decal.shader_id,
+        decal.texture_ids[0],
+        false,
+        false
+    );
+    GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr)); // Magic 6
+    context.meshes->unbind();
 }
 
 void Geez::RenderStrategyGameobject::execute(IRenderData &data, const RenderContext &context)
@@ -205,6 +226,6 @@ void Geez::RenderStrategyGUI::execute(IRenderData &data, const RenderContext &co
         false,
         false
     );
-    GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr)); // Magic 6
-    context.meshes->unbind();   
+    GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr)); // Magic 6  
+    context.meshes->unbind();
 }

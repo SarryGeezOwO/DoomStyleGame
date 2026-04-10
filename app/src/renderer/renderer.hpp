@@ -14,6 +14,7 @@
 
 #include <glm/glm.hpp>
 #include <vector>
+#include <array>
 #include <memory>
 
 namespace Geez
@@ -31,8 +32,8 @@ namespace Geez
     struct Renderer
     {
     private:
-        std::vector<std::unique_ptr<IRenderData>> render_list;
-        std::unique_ptr<IRenderStrategy> strategies[GZ_RENDER_TYPES_COUNT];
+        std::array<std::vector<std::unique_ptr<IRenderData>>, RenderType::R_RENDER_TYPE_COUNT> render_buckets;
+        std::unique_ptr<IRenderStrategy> strategies[RenderType::R_RENDER_TYPE_COUNT];
         std::unique_ptr<RenderContext> context;
 
     public:

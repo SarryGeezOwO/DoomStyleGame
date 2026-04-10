@@ -97,6 +97,14 @@ namespace Geez
     inline F32 cross(const glm::vec2& a, const glm::vec2& b) {
         return a.x * b.y - a.y * b.x;
     }
+
+    /**
+     * @brief Returns a 2D surface normal of a segment facing a reference point.
+     * @param a First endpoint of the segment.
+     * @param b Second endpoint of the segment.
+     * @param ref Point used to determine which side the normal should face.
+     */
+    glm::vec2 get_facing_normal(glm::vec2 a, glm::vec2 b, glm::vec2 ref);
 }
 
 #endif

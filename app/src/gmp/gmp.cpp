@@ -9,7 +9,6 @@
 
 #include <fstream>
 #include <sstream>
-#include <glm/glm.hpp>
 #include <earcut/earcut.hpp>
 
 using namespace glm;
@@ -23,6 +22,7 @@ enum GroupType {
     HOLE,
 };
 
+static Geez::U32 decal_id_ref = 0;
 static std::vector<Geez::F32> get_values_from_string(const std::string& str)
 {
     std::vector<Geez::F32> values;
@@ -168,11 +168,11 @@ Geez::GeezMapData::GeezMapData(const std::string &file)
             auto it = portal_prev_sec.find(wall_id);
             if (it != portal_prev_sec.end()) {
                 // Two sectors acknowledges this wall existance, IDK what im cooking
-                wall->connected_sectors[0] = it->second;
                 wall->connected_sectors[1] = sector.id;
             }
             else {
                 // First sector to mention this edge
+                wall->connected_sectors[0] = sector.id;
                 portal_prev_sec.insert({wall_id, sector.id});
             }
         }
@@ -194,6 +194,7 @@ Geez::GeezMapData::~GeezMapData()
     sector_meshes.clear();
     walls.clear();
     sectors.clear();
+    decals.clear();
     GZ_LOG(GZ_SUCCESS, "GeezMap [%s] Destroyed", m_resource_id.c_str());
 }
 
@@ -263,17 +264,101 @@ bool Geez::GeezMapData::is_sector_scary(U32 sector_id, U32 wall_id)
     return (std::find(wall->scary_sectors.begin(), wall->scary_sectors.end(), sector_id) == wall->scary_sectors.end());
 }
 
-Geez::wall_t *Geez::GeezMapData::get_wall(U32 wall_id)
+Geez::U32 Geez::GeezMapData::make_decal(vec3 pos, vec2 size, ResourceID texture_id, decal_t::target_t target, U32 target_id)
 {
-    auto it = std::lower_bound(walls.begin(), walls.end(), wall_id, [](const wall_t& wall, U32 id){
-        return wall.id < id;
+    decal_t d{};
+    d.id            = decal_id_ref++;
+    d.size          = size;
+    d.texture_id    = texture_id;
+
+    update_decal(&d, pos, target, target_id);
+    decals.push_back(d);
+    return d.id;
+}
+
+void Geez::GeezMapData::update_decal(decal_t *decal, glm::vec3 new_pos, decal_t::target_t target, U32 target_id)
+{
+    if (!decal) return;
+
+    decal->position  = new_pos;
+    decal->target    = target;
+    decal->target_id = target_id;
+    
+    switch (decal->target)
+    {
+        case decal_t::WALL:
+            {
+                // Compute wall normal
+                const wall_t* wall = get_wall(decal->target_id);
+                if (!wall) 
+                    break;
+
+                const vec2 pa(wall->point_a[0], wall->point_a[1]);
+                const vec2 pb(wall->point_b[0], wall->point_b[1]);
+                vec2 ref_pos;
+
+                Internal::Logger::disable_logging();
+                sector_t*  sa = get_sector(wall->connected_sectors[0]);
+                sector_t*  sb = get_sector(wall->connected_sectors[1]);
+                Internal::Logger::enable_logging();
+
+                if (sa && sb) {
+                    // TODO: 💀💀💀
+                }
+                else if (sa) ref_pos = sa->center;
+                else if (sb) ref_pos = sb->center;
+                
+                const vec2 norm = get_facing_normal(pa, pb, ref_pos);
+                decal->normal = vec3(norm.x, 0, norm.y);
+            }
+            break;
+
+        case decal_t::FLOOR:
+            decal->normal = vec3(0, 1, 0);
+            break;
+
+        case decal_t::CEIL:
+            decal->normal = vec3(0, -1, 0);
+            break;
+        
+        default:
+            break;
+    }
+}
+
+void Geez::GeezMapData::update_decal(U32 decal_id, glm::vec3 new_pos, decal_t::target_t target, U32 target_id)
+{
+    decal_t* decal = get_decal(decal_id);
+    update_decal(decal, new_pos, target, target_id);
+}
+
+
+
+Geez::decal_t *Geez::GeezMapData::get_decal(U32 decal_id)
+{
+    return const_cast<decal_t*>(
+        static_cast<const GeezMapData*>(this)->get_decal(decal_id));
+}
+
+const Geez::decal_t *Geez::GeezMapData::get_decal(U32 decal_id) const
+{
+    auto it = std::lower_bound(decals.begin(), decals.end(), decal_id, [](const decal_t& decal, U32 id){
+        return decal.id < id;
     });
 
-    if (it != walls.end() && it->id == wall_id)
+    if (it != decals.end() && it->id == decal_id)
         return &(*it);
 
-    GZ_LOG(GZ_FAIL, "Unknown Wall [ID: %d]", wall_id);
+    GZ_LOG(GZ_FAIL, "Unknown Decal [ID: %d]", decal_id);
     return nullptr;
+}
+
+
+
+Geez::wall_t *Geez::GeezMapData::get_wall(U32 wall_id)
+{
+    return const_cast<wall_t*>(
+        static_cast<const GeezMapData*>(this)->get_wall(wall_id));
 }
 
 const Geez::wall_t *Geez::GeezMapData::get_wall(U32 wall_id) const
@@ -289,17 +374,12 @@ const Geez::wall_t *Geez::GeezMapData::get_wall(U32 wall_id) const
     return nullptr;
 }
 
+
+
 Geez::sector_t *Geez::GeezMapData::get_sector(U32 sector_id)
 {
-    auto it = std::lower_bound(sectors.begin(), sectors.end(), sector_id, [](const sector_t& wall, U32 id){
-        return wall.id < id;
-    });
-
-    if (it != sectors.end() && it->id == sector_id)
-        return &(*it);
-
-    GZ_LOG(GZ_FAIL, "Unknown Sector [ID: %d]", sector_id);
-    return nullptr;
+    return const_cast<sector_t*>(
+        static_cast<const GeezMapData*>(this)->get_sector(sector_id));
 }
 
 const Geez::sector_t *Geez::GeezMapData::get_sector(U32 sector_id) const
@@ -315,13 +395,12 @@ const Geez::sector_t *Geez::GeezMapData::get_sector(U32 sector_id) const
     return nullptr;
 }
 
+
+
 Geez::sector_mesh_t *Geez::GeezMapData::get_sector_mesh(U32 sector_id)
 {
-    if (sector_meshes.find(sector_id) != sector_meshes.end()) {
-        return sector_meshes.at(sector_id).get();
-    }
-    GZ_LOG(GZ_FAIL, "Unknown Sector_Mesh [ID: %d]", sector_id);
-    return nullptr;
+    return const_cast<sector_mesh_t*>(
+        static_cast<const GeezMapData*>(this)->get_sector_mesh(sector_id));
 }
 
 const Geez::sector_mesh_t *Geez::GeezMapData::get_sector_mesh(U32 sector_id) const
@@ -332,6 +411,8 @@ const Geez::sector_mesh_t *Geez::GeezMapData::get_sector_mesh(U32 sector_id) con
     GZ_LOG(GZ_FAIL, "Unknown Sector_Mesh [ID: %d]", sector_id);
     return nullptr;
 }
+
+
 
 std::weak_ptr<Geez::sector_mesh_t> Geez::GeezMapData::get_weak_sector_mesh(U32 sector_id)
 {

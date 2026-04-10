@@ -10,6 +10,7 @@
 using namespace glm;
 
 // TEMP
+static const char* decal_shader = "decal";
 static const char* unlit_shader = "unlit";
 static const char* lit_shader   = "lit_texture";
 
@@ -56,11 +57,27 @@ Geez::Renderer::~Renderer()
 
 void Geez::Renderer::submit_map_geometry(GeezMapData &map)
 {
+    // Decals
+    for (const decal_t& decal : map.get_decals()) {
+        auto r_decal_data = [&]{
+            RenderDataDecal_t d{};
+            d.position       = decal.position;
+            d.normal         = decal.normal;
+            d.size           = decal.size;
+            d.texture_ids[0] = decal.texture_id;
+            d.shader_id      = decal_shader;
+            return d;
+        }();
+        submit(std::make_unique<RenderDataDecal_t>(r_decal_data));
+    }
+
     // Wall_ID, Sector_ID
     std::unordered_map<U32, U32> portal_prev_sec;
     const vec2 camPosXZ(context->active_camera->position.x, context->active_camera->position.y);
-    
-    for (const sector_t& sector : map.get_sectors()) { 
+
+    // Map geometry or something
+    for (const sector_t& sector : map.get_sectors()) {
+
         for (const U32 wall_id : sector.walls) {
             const wall_t& wall = *map.get_wall(wall_id);
             const vec2 point_a = {wall.point_a[0], wall.point_a[1]};
@@ -177,7 +194,14 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
 
 void Geez::Renderer::submit(std::unique_ptr<IRenderData> data)
 {
-    render_list.push_back(std::move(data));
+    if (!data) 
+        return;
+    
+    RenderType type = data->type;
+    if (type == R_NONE || type > R_GUI) 
+        return;
+
+    render_buckets[static_cast<size_t>(type)].push_back(std::move(data));
 }
 
 void Geez::Renderer::flush()
@@ -190,28 +214,29 @@ void Geez::Renderer::flush()
         return;
     }
 
-    // Map rendering or something sorted by Render Category
+    // Map rendering sequence
     // Wall -> Sector -> Decal -> GameObject -> GUI
-    std::sort(render_list.begin(), render_list.end(), [](const auto& a, const auto& b) 
-    { return a->type < b->type; });
 
     context->active_camera->perspective();
-    for (const auto& data_ptr : render_list) 
-    {   
-        IRenderData* data       = data_ptr.get();
-        const RenderType type   = data->type;
+    for (int type = 0; type < R_RENDER_TYPE_COUNT; ++type) {
 
-        switch(type) {
-            case R_NONE: continue;
-            case R_GUI: {
-                context->active_camera->orthographic(); 
-                break;
-            }
-            default: break;
+        if (type == R_GUI) {
+            glDisable(GL_DEPTH_TEST);
+            context->active_camera->orthographic();
         }
-        strategies[type]->execute(*data, *context.get());
+        else {
+            glEnable(GL_DEPTH_TEST);
+            context->active_camera->perspective();
+        }
+
+        for (auto& data_ptr : render_buckets[type]) {
+            strategies[type]->execute(*data_ptr, *context);
+        }
+
+        render_buckets[type].clear();
     }
-    render_list.clear();
+
+    context->meshes->unbind();
     SDL_GL_SwapWindow(context->active_window->handle());
     context->active_camera->perspective();
 }

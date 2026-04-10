@@ -5,6 +5,7 @@
 #include <sstream>
 
 static unsigned int global_tab_Level = 0;
+static bool logging_enabled = true;
 
 static const char* GetLogTypeName(Geez::LogType type) {
     switch (type)
@@ -21,6 +22,8 @@ static const char* GetLogTypeName(Geez::LogType type) {
 
 static void log_internal(Geez::LogType type, unsigned int tab_level, const char* format, va_list args)
 {
+    if (!logging_enabled) return;
+
     std::stringstream str;
     for (unsigned int i = 0; i < tab_level; ++i)
         str << "+ ";
@@ -50,6 +53,16 @@ void Geez::Internal::Logger::decrement_tab_level(unsigned int amount)
         return;
     }
     global_tab_Level -= amount;
+}
+
+void Geez::Internal::Logger::enable_logging()
+{
+    logging_enabled = true;
+}
+
+void Geez::Internal::Logger::disable_logging()
+{
+    logging_enabled = false;
 }
 
 void Geez::Internal::Logger::Log(LogType type, const char *format, ...)

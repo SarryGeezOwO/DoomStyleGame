@@ -156,10 +156,6 @@ void start()
     player->physics->step_height        = 0.125f;
     player->physics->friction           = 0.0f;
 
-    // Decal (GameObject)
-    auto decal = entities->create("Decal", unlit_shader_name, "DefaultTexture");
-    decal->scale = vec3(0.2f, 0.2f, 1.0f);
-
     // Sun
     auto instance1 = entities->create("LightSource", unlit_shader_name, "sun");
     instance1->scale = vec3(0.2f, 0.2f, 1.0f);
@@ -281,10 +277,23 @@ void update()
             vec3 hitpoint;
             
             wall_raycast(camera.position, camera.axis_forward(), 10, *map_data, hitpoint, hit_wall); 
-            GameObject* decal = entities->get("Decal");
+            decal_t* decal = map_data->get_decal(sample_decal);
 
+            // Firt time creating
+            if (!decal) {
+                sample_decal = map_data->make_decal(
+                    hitpoint, 
+                    vec2(1, 1), 
+                    "DefaultTexture", 
+                    decal_t::WALL, 
+                    hit_wall->id
+                );
+                decal = map_data->get_decal(sample_decal);
+            }
+
+            // Update
             if (decal && hit_wall) {
-                decal->position = hitpoint;
+                map_data->update_decal(decal, hitpoint, decal_t::WALL, hit_wall->id);
             }
         }
 

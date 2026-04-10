@@ -133,11 +133,11 @@ namespace Geez
     }
 
     bool wall_raycast(
-        const glm::vec3 &ray_origin,
-        const glm::vec3 &ray_dir,
+        const vec3 &ray_origin,
+        const vec3 &ray_dir,
         F32 ray_length,
         const GeezMapData &map,
-        glm::vec3 &out_hit,
+        vec3 &out_hit,
         const wall_t *&out_wall)
     {
         vec2 ra(ray_origin.x, ray_origin.z);
@@ -204,6 +204,21 @@ namespace Geez
         }
 
         return hit;
+    }
+
+    vec2 get_facing_normal(vec2 a, vec2 b, vec2 ref)
+    {
+        const vec2 dir    = normalize(b - a);
+        const vec2 left   = vec2(-dir.y, dir.x);
+        const vec2 right  = vec2(dir.y, -dir.x);
+
+        const vec2 center = (a + b) * 0.5f;
+        const vec2 to_ref = normalize(ref - center);
+
+        if (dot(left, to_ref) < 0)
+            return right;
+
+        return left;
     }
 
 }

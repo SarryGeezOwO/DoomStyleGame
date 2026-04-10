@@ -44,6 +44,9 @@ namespace Geez
             // Minus one tab level
             static void decrement_tab_level(unsigned int amount);
 
+            static void enable_logging();
+            static void disable_logging();
+
             // default logging
             static void Log(LogType type, const char* format, ...);
 

@@ -19,11 +19,17 @@ namespace Geez
 
     struct decal_t {
         U32 id;
-        glm::vec2 position;
+        glm::vec3 position;
+        glm::vec3 normal;
         glm::vec2 size;
-        ResourceID texture_id = "DefaultTexture";
-        U32 id_attached_to;
-        bool id_space_wall;
+        ResourceID texture_id;
+
+        enum target_t {
+            WALL, FLOOR, CEIL
+        };
+
+        target_t target;
+        U32 target_id;
     };
 
     struct wall_t {

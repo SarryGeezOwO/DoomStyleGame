@@ -276,11 +276,11 @@ void update()
             const wall_t* hit_wall = nullptr;
             vec3 hitpoint;
             
-            wall_raycast(camera.position, camera.axis_forward(), 10, *map_data, hitpoint, hit_wall); 
+            wall_raycast(camera.position, camera.axis_forward(), *map_data, &hitpoint, &hit_wall); 
             decal_t* decal = map_data->get_decal(sample_decal);
 
             // Firt time creating
-            if (!decal) {
+            if (!decal && hit_wall) {
                 sample_decal = map_data->make_decal(
                     hitpoint, 
                     vec2(1, 1), 

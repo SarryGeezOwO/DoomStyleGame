@@ -9,7 +9,7 @@ using namespace glm;
 
 namespace Geez
 {
-    static const F64 EPSILON = 1e-9;
+    static constexpr F32 EPSILON = std::numeric_limits<F32>::epsilon();
  
     vec2 get_polygon_center(const Polygon_t& polygon) 
     {
@@ -113,7 +113,7 @@ namespace Geez
     glm::vec2 closest_point_on_segment(const glm::vec2 &a, const glm::vec2 &b, const glm::vec2 &p)
     {
         vec2 ab = b - a;
-        float t = glm::dot(p - a, ab) / dot(ab, ab);
+        F32 t = glm::dot(p - a, ab) / dot(ab, ab);
         t = glm::clamp(t, 0.0f, 1.0f);
         return a + ab * t;
     }
@@ -132,48 +132,70 @@ namespace Geez
         return isInside;
     }
 
+    bool raycast_2D(
+        const vec2 &origin, 
+        const vec2 &dir, 
+        const vec2 &pa, 
+        const vec2 &pb, 
+        vec2* out_hit)
+    {
+        vec2 seg = pb - pa;
+        F32 denom = cross(dir, seg);
+
+        // Parallel
+        if (fabs(denom) < EPSILON) return false;
+
+        vec2 diff = pa - origin;
+        F32 t = cross(diff, seg) / denom;
+        F32 u = cross(diff, dir) / denom;
+
+        bool hit = (t > EPSILON) && (u >= 0.0f) && (u < 1.0f);
+        if (out_hit) {
+            *out_hit = ((F32)hit * (origin + dir * t));
+        }
+        return hit;
+    }
+
     bool wall_raycast(
         const vec3 &ray_origin,
         const vec3 &ray_dir,
-        F32 ray_length,
         const GeezMapData &map,
-        vec3 &out_hit,
-        const wall_t *&out_wall)
+        vec3* out_hit,
+        const wall_t** out_wall)
     {
-        vec2 ra(ray_origin.x, ray_origin.z);
+        vec2 ro(ray_origin.x, ray_origin.z);
         vec2 rd(ray_dir.x, ray_dir.z);
 
-        float smallest_dist = FLT_MAX;
+        F32 smallest_dist = FLT_MAX;
         bool hit = false;
 
         for (const wall_t& w : map.get_walls())
         {
-            vec2 pa(w.point_a[0], w.point_a[1]);
-            vec2 pb(w.point_b[0], w.point_b[1]);
+            vec2 pa = point_to_vec(w.point_a);
+            vec2 pb = point_to_vec(w.point_b);
 
             vec2 line_dir = pb - pa;
-            vec2 diff     = pa - ra;
+            vec2 diff     = pa - ro;
 
-            float denom = cross(rd, line_dir);
+            F32 denom = cross(rd, line_dir);
 
-            if (fabs(denom) < 0.0001f)
+            if (fabs(denom) < EPSILON)
                 continue;
 
-            float t = cross(diff, line_dir) / denom;
-            float u = cross(diff, rd) / denom;
+            F32 t = cross(diff, line_dir) / denom;
+            F32 u = cross(diff, rd) / denom;
 
-            if (t < 0 || t > ray_length)
+            if (t < 0)
                 continue;
 
             if (u < 0 || u > 1)
                 continue;
 
-            vec2 hitpoint = ra + rd * t;
+            vec2 hitpoint = ro + rd * t;
+            F32 hitY = ray_origin.y + ray_dir.y * t;
 
-            float hitY = ray_origin.y + ray_dir.y * t;
-
-            float floorY = 0;
-            float ceilY  = 0;
+            F32 floorY = 0;
+            F32 ceilY  = 0;
 
             if (w.is_portal)
             {
@@ -190,15 +212,15 @@ namespace Geez
                 }
             }
 
-            const vec3 closest_hit(hitpoint.x, hitY, hitpoint.y);
-            const vec3 v = closest_hit - ray_origin; 
-            const F32  dist_sq = dot(v, v);
+            vec3 closest_hit(hitpoint.x, hitY, hitpoint.y);
+            vec3 v = closest_hit - ray_origin; 
+            F32  dist_sq = dot(v, v);
 
             if (dist_sq < smallest_dist)
             {
                 smallest_dist = dist_sq;
-                out_hit = closest_hit;
-                out_wall = &w;
+                if (out_hit)  *out_hit  = closest_hit;
+                if (out_wall) *out_wall = &w;
                 hit = true;
             }
         }
@@ -206,14 +228,53 @@ namespace Geez
         return hit;
     }
 
+    glm::vec2 get_inward_normal(const glm::vec2 &pa, const glm::vec2 &pb, const Polygon_t &polygon)
+    {
+        vec2 edge = pb - pa;
+        vec2 mid = get_midpoint_line(pa, pb);
+        
+        vec2 cands[2] = {
+            vec2(-edge.y,  edge.x), // CCW
+            vec2( edge.y, -edge.x)  // CW
+        };
+
+        I32 n = (I32)polygon.size();
+        for (const vec2& cand : cands) {
+            I32 intersections = 0;
+
+            for (I32 i = 0; i < n; i++) {
+                const vec2& a = point_to_vec(polygon[i]);
+                const vec2& b = point_to_vec(polygon[(i + 1) % n]);
+                
+                if (raycast_2D(mid, cand, a, b, nullptr)) {
+                    ++intersections;
+                }
+            }
+            if (intersections % 2 == 1) {
+                return normalize(cand);
+            }
+        }
+
+        return vec2(0);
+    }
+
+    Polygon_t compress_sector_to_polygon(const sector_t &sector)
+    {
+        Polygon_t res;
+        for (const Polygon_t& poly : sector.polygons) {
+            res.insert(res.end(), poly.begin(), poly.end());
+        }
+        return res;
+    }
+
     vec2 get_facing_normal(vec2 a, vec2 b, vec2 ref)
     {
-        const vec2 dir    = normalize(b - a);
-        const vec2 left   = vec2(-dir.y, dir.x);
-        const vec2 right  = vec2(dir.y, -dir.x);
+        vec2 dir    = normalize(b - a);
+        vec2 left   = vec2(-dir.y, dir.x);
+        vec2 right  = vec2(dir.y, -dir.x);
 
-        const vec2 center = (a + b) * 0.5f;
-        const vec2 to_ref = normalize(ref - center);
+        vec2 center = (a + b) * 0.5f;
+        vec2 to_ref = normalize(ref - center);
 
         if (dot(left, to_ref) < 0)
             return right;

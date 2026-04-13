@@ -67,10 +67,11 @@ namespace Geez
         return path.string();
     }
 
+    
     template <typename T, typename U>
     T lerp(const T& a, const T& b, const U& t) {
         return a + t * (b - a);
-    }
+    } 
 
     inline bool number_in_range(F32 x, F32 min, F32 max) {
         return (x == std::clamp(x, min, max));

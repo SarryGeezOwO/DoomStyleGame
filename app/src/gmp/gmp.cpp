@@ -283,33 +283,40 @@ void Geez::GeezMapData::update_decal(decal_t *decal, glm::vec3 new_pos, decal_t:
     decal->position  = new_pos;
     decal->target    = target;
     decal->target_id = target_id;
-    
+    decal->normal    = vec3(0);
+
     switch (decal->target)
     {
         case decal_t::WALL:
             {
                 // Compute wall normal
-                const wall_t* wall = get_wall(decal->target_id);
-                if (!wall) 
-                    break;
-
-                const vec2 pa(wall->point_a[0], wall->point_a[1]);
-                const vec2 pb(wall->point_b[0], wall->point_b[1]);
-                vec2 ref_pos;
-
                 Internal::Logger::disable_logging();
-                sector_t*  sa = get_sector(wall->connected_sectors[0]);
-                sector_t*  sb = get_sector(wall->connected_sectors[1]);
+                const wall_t* wall = get_wall(decal->target_id);
+                if (!wall) {
+                    Internal::Logger::enable_logging();
+                    break;
+                }
+
+                vec2 pa = point_to_vec(wall->point_a);
+                vec2 pb = point_to_vec(wall->point_b);
+                Polygon_t sec_poly;
+
+                sector_t* sa = get_sector(wall->connected_sectors[0]);
+                sector_t* sb = get_sector(wall->connected_sectors[1]);
                 Internal::Logger::enable_logging();
 
                 if (sa && sb) {
-                    // TODO: 💀💀💀
-                }
-                else if (sa) ref_pos = sa->center;
-                else if (sb) ref_pos = sb->center;
-                
-                const vec2 norm = get_facing_normal(pa, pb, ref_pos);
+                    sec_poly = compress_sector_to_polygon(*sa);
+                    Polygon_t b = compress_sector_to_polygon(*sb);
+                    sec_poly.insert(sec_poly.end(), b.begin(), b.end());
+                } 
+                else if (sa) sec_poly = compress_sector_to_polygon(*sa);
+                else if (sb) sec_poly = compress_sector_to_polygon(*sb);
+
+                vec2 norm = get_inward_normal(pa, pb, sec_poly);
                 decal->normal = vec3(norm.x, 0, norm.y);
+            
+                // GZ_LOG(GZ_WARNING, "%.2f, %.2f", norm.x, norm.y);
             }
             break;
 

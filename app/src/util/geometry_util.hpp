@@ -67,12 +67,19 @@ namespace Geez
      */
     bool is_point_in_sector(const glm::vec2& posXZ, const sector_t& sector);
 
+    bool raycast_2D(
+        const glm::vec2& origin, 
+        const glm::vec2& dir, 
+        const glm::vec2& pa, 
+        const glm::vec2& pb,
+        glm::vec2* out_hit
+    );
+
     /**
      * @brief Cast a ray and check if it hits any wall in the map.
      *
      * @param ray_origin glm::vec3: Starting point of the ray.
      * @param ray_dir glm::vec3: Normalized ray direction.
-     * @param ray_length F32: Maximum ray distance.
      * @param map GeezMapData: Map containing sectors and walls.
      * @param out_hit glm::vec3&: Stores hit position if collision occurs. (nullptr valid)
      * @param out_wall wall_t: Stores the constant wall ref if collision occurs.
@@ -80,12 +87,31 @@ namespace Geez
      */
     bool wall_raycast(
         const glm::vec3& ray_origin, 
-        const glm::vec3& ray_dir, 
-        F32 ray_length, 
+        const glm::vec3& ray_dir,  
         const GeezMapData& map, 
-        glm::vec3& out_hit,
-        const wall_t*& out_wall
+        glm::vec3* out_hit,
+        const wall_t** out_wall
     );
+
+    glm::vec2 get_inward_normal(const glm::vec2& pa, const glm::vec2& pb, const Polygon_t& polygon);
+
+    inline Polygon_t scale_polygon(const Polygon_t& polygon, F32 scale) {
+        Polygon_t p(polygon);
+        for (Point_t& point : p) {
+            point[0] *= scale;
+            point[1] *= scale;
+        }
+        return p;
+    }
+
+    Polygon_t compress_sector_to_polygon(const sector_t& sector);
+
+    inline glm::vec2 get_midpoint_line(const glm::vec2& pa, const glm::vec2& pb) {
+        return glm::vec2(
+            (pa.x + pb.x) / 2.0f,
+            (pa.y + pb.y) / 2.0f
+        );
+    }
 
     /**
      * @brief Compute 2D cross product of two vectors.
@@ -96,6 +122,10 @@ namespace Geez
      */
     inline F32 cross(const glm::vec2& a, const glm::vec2& b) {
         return a.x * b.y - a.y * b.x;
+    }
+
+    inline glm::vec2 point_to_vec(const Point_t& point) {
+        return glm::vec2(point[0], point[1]);
     }
 
     /**

@@ -51,16 +51,16 @@ void Geez::RenderStrategyWall::execute(IRenderData &data, const RenderContext &c
     }
 
     Mesh* mesh = context.meshes->get("QUAD");
-    const vec2 v = wall.b - wall.a;
-    const vec2 dir  = normalize(v);
-    const vec2 mid  = wall.a + (v * 0.5f);
-    const vec2 norm = vec2(-dir.y, dir.x) * (wall.flipped ? -1.0f : 1.0f);
-    const vec2 to_center = normalize(wall.ref_center - mid);
-    
-    const F32 mag    = abs(length(v));
-    const F32 angle  = SDL_atan2f(dir.y, dir.x);
-    const F32 facing = dot(norm, to_center);
-    const F32 height = abs(wall.yBottom - wall.yTop);
+    vec2 v = wall.b - wall.a;
+    vec2 dir  = normalize(v);
+    vec2 mid  = wall.a + (v * 0.5f);
+    vec2 norm = vec2(-dir.y, dir.x) * (wall.flipped ? -1.0f : 1.0f);
+    vec2 to_center = normalize(wall.ref_center - mid);
+
+    F32 mag    = abs(length(v));
+    F32 angle  = SDL_atan2f(dir.y, dir.x);
+    F32 facing = dot(norm, to_center);
+    F32 height = abs(wall.yBottom - wall.yTop);
 
     mesh->bind();
     mat4 model =  mat4(1.0f);
@@ -136,9 +136,9 @@ void Geez::RenderStrategySector::execute(IRenderData &data, const RenderContext 
     context.meshes->unbind();
 
     #ifdef GZ_BUILD_DEBUG
-        const vec3 WORLD_UP = vec3(0,1,0);
-        const vec3 floorC = vec3(sector.center.x, sector.floor, sector.center.y);
-        const vec3 ceilC  = vec3(sector.center.x, sector.ceil,  sector.center.y);
+        vec3 WORLD_UP = vec3(0,1,0);
+        vec3 floorC = vec3(sector.center.x, sector.floor, sector.center.y);
+        vec3 ceilC  = vec3(sector.center.x, sector.ceil,  sector.center.y);
         GZ_DEBUG_DRAW_RAY(context, floorC,  WORLD_UP, 0.075f, 3);
         GZ_DEBUG_DRAW_RAY(context, ceilC,  -WORLD_UP, 0.075f, 3);
     #endif
@@ -154,7 +154,7 @@ void Geez::RenderStrategyDecal::execute(IRenderData &data, const RenderContext &
 
     Mesh* mesh = context.meshes->get("DECAL");
     mat4 model = mat4(1.0f);
-        model  = translate(model, decal.position + decal.normal * 0.01f);
+        model  = translate(model, decal.position + decal.normal * 0.005f);
         model *= make_rotation_from_direction(decal.normal);
         model  = scale(model, vec3(decal.size.x, decal.size.y, 1.0f));
 

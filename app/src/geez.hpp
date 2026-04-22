@@ -62,6 +62,7 @@ Don't judge me pls 💔💔💔
 #include "util/utility.hpp"
 #include "util/geometry_util.hpp"
 #include "util/common_types.hpp"
+#include "util/profiler.hpp"
 
 // STD
 #include <string>

@@ -56,6 +56,9 @@ namespace Geez
         
         // Renders until queue is empty
         void flush();
+
+        // Display to window
+        void display_frame();
     };
 
 

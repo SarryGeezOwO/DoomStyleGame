@@ -67,12 +67,22 @@ void Geez::Window::toggle_cursor_visible()
 }
 
 void Geez::Window::set_cursor_visible(bool b)
-{
-    SDL_SetWindowRelativeMouseMode(m_window, !b);
+{    
     if (b) {
+        SDL_SetWindowMouseRect(m_window, NULL);
         SDL_WarpMouseInWindow(m_window, m_size.x/2.0f, m_size.y/2.0f);
         SDL_ShowCursor();
     }
-    else   SDL_HideCursor();
+    else {
+        SDL_Rect rect = { 
+            (m_size.x/2) - 20, 
+            (m_size.y/2) - 20, 
+            40, 40 
+        };
+        SDL_SetWindowMouseRect(m_window, &rect);
+        SDL_HideCursor();
+    }
+    
+    SDL_SetWindowRelativeMouseMode(m_window, !b);
     m_cursor_visible = b;
 }

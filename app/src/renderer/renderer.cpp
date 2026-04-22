@@ -1,6 +1,9 @@
 #include <renderer.hpp>
 #include <SDL3/SDL.h>
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_opengl3.h"
+#include "imgui/imgui_impl_sdl3.h"
 #include "util/error.hpp"
 #include "util/log.hpp"
 #include "util/geometry_util.hpp"
@@ -206,6 +209,7 @@ void Geez::Renderer::submit(std::unique_ptr<IRenderData> data)
 
 void Geez::Renderer::flush()
 {
+    ImGui::Render();
     glEnable(GL_DEPTH_TEST);
     GL(glClearColor(0.1f, 0.1f, 0.1f, 1.0f));
     GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
@@ -237,8 +241,13 @@ void Geez::Renderer::flush()
     }
 
     context->meshes->unbind();
-    SDL_GL_SwapWindow(context->active_window->handle());
     context->active_camera->perspective();
+}
+
+void Geez::Renderer::display_frame()
+{
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    SDL_GL_SwapWindow(context->active_window->handle());
 }
 
 /* ====== DEBUG DRAWS ====== */

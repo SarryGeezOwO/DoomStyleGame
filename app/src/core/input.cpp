@@ -1,5 +1,6 @@
 #include "input.hpp"
 #include "util/log.hpp"
+#include "imgui/imgui_impl_sdl3.h"
 using namespace glm;
 
 bool Geez::Input::poll_events()
@@ -13,6 +14,8 @@ bool Geez::Input::poll_events()
     prevMouseRight = currMouseRight;
 
     while(SDL_PollEvent(&m_event)) {
+        ImGui_ImplSDL3_ProcessEvent(&m_event);
+        
         switch(m_event.type) {
             case SDL_EVENT_QUIT:
                 return false;

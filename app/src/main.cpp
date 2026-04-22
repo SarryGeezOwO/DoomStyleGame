@@ -34,9 +34,9 @@ static vec2 last_rel_mouse;
 static F32 delta_time;  // Seconds
 static F32 game_time;   // Seconds since start
 static F32 frame_timer; // Timer every second
-static I32 frame_tick;  // Tick count every second
+static I32 frame_tick;  // Tick count (resets every second)
 static F32 runtime_fps;
-static F32 cam_sensitivity = 0.075f;
+static F32 cam_sensitivity = 0.03f;
 static ResourceID current_map = "sample";
 static GameObject* player = nullptr;
 
@@ -55,6 +55,7 @@ static PhysicsSystem physics{};
 
 vec3 light_pos = vec3(0, 1, 0);
 U32 sample_decal = 0;
+std::string update_time = "";
 
 // =========================================//
 
@@ -91,8 +92,25 @@ void init() {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    
+    F32 main_scale = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+    ImGui::StyleColorsDark();
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(main_scale);
+    style.FontScaleDpi = main_scale;
+
     ImGui_ImplSDL3_InitForOpenGL(window->handle(), window->glContext());
     ImGui_ImplOpenGL3_Init("#version 330");
+
+    //style.FontSizeBase = 20.0f;
+    //io.Fonts->AddFontDefaultVector();
+    //io.Fonts->AddFontDefaultBitmap();
+    //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf");
+    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf");
+    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf");
+    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf");
+    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf");
+    //IM_ASSERT(font != nullptr);
 
     // Sub Systems
     window->set_cursor_visible(false);
@@ -240,6 +258,8 @@ void logic_character_controller(GeezMapData* map) {
 
 void update()
 {   
+    RaiiTimer<SECONDS> rt(&update_time);
+
     // Change Map
     logic_map_change();
     GeezMapData* map_data = resource->get<GeezMapData>(current_map);
@@ -253,7 +273,11 @@ void update()
     logic_character_controller(map_data);
 
     // Spawn physics balls in front of camera
-    if (input.check_mouse_left(GZ_TAP) && !input.check_key(SDLK_LSHIFT, GZ_HOLD)) {
+    if (
+        input.check_mouse_left(GZ_TAP) && 
+        !window->is_cursor_shown() &&
+        !input.check_key(SDLK_LSHIFT, GZ_HOLD)
+    ) {
         GameObject* ball = nullptr;
         if ((ball = entities->get("Ball"))) {
             entities->destroy("Ball");
@@ -318,6 +342,15 @@ void update()
 
 void post_update() {
     camera.position = player->position + vec3(0, (player->physics->height * 0.5f), 0);
+
+    ImGui::Begin("Testing");
+    ImGui::Text("FPS:        %.4f",  runtime_fps);
+    ImGui::Text("Ticks:      %d",    frame_tick);
+    ImGui::Text("Game Time:  %.4fs", game_time);
+    ImGui::Text("Delta Time: %.4fs", delta_time);
+    ImGui::NewLine(); ImGui::Separator(); ImGui::NewLine();
+    ImGui::Text("[BM] Update Time: %s", update_time.c_str());
+    ImGui::End();
 }
 
 void render()
@@ -395,11 +428,16 @@ int main()
         last_rel_mouse = input.mouse_relative();
         isRunning = input.poll_events();
 
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
+
         camera.update();
         update();
         physics.update(*entities, *resource->get<GeezMapData>(current_map), delta_time);
         post_update();
         render();
+        renderer->display_frame();
         
         // runtime FPS Calculation
         frame_tick++;
@@ -408,7 +446,6 @@ int main()
             runtime_fps = frame_tick / frame_timer;
             frame_timer = 0.0;
             frame_tick = 0;
-            window->rename("3D Renderer | FPS: " + std::to_string(runtime_fps));
         }
     }
 

@@ -30,8 +30,8 @@ void Geez::VertexArray::bind_buffer(VertexBuffer *vbo, IndexBuffer *ebo, const V
             ele.type, 
             ele.normalized, 
             layout.stride(), 
-            (const void*)offset)
-        ); 
+            reinterpret_cast<const void*>(offset)
+        )); 
         GL(glEnableVertexAttribArray(index++));
         offset += ele.count * VertexElement::get_size(ele.type);
     }

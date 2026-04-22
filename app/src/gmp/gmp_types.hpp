@@ -49,7 +49,7 @@ namespace Geez
         U32 id;
         F32 floor_height;                           // Floor...
         F32 ceil_height;                            // Not relative to the floor_height
-        bool is_hole;                               // Is this sector inside another sector
+        bool is_interior;                           // Is this sector inside another sector
         glm::vec2 center = glm::vec2(0);            // Center for the polygon (not accounting for holes)
         std::vector<U32> walls = {};                // Wall_ids
         std::vector<Polygon_t> polygons = {{}};     // For Earcut

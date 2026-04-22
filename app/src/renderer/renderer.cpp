@@ -111,7 +111,7 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
             if (it != portal_prev_sec.end()) {
                 // The other sector who also has this edge
                 const sector_t& prev_sec = *map.get_sector(it->second);
-                bool hole_present = prev_sec.is_hole || sector.is_hole;
+                bool hole_present = prev_sec.is_interior || sector.is_interior;
                 F32 other_flor = prev_sec.floor_height;
                 F32 other_ceil = prev_sec.ceil_height;
 
@@ -124,7 +124,7 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
                 // If hole is present, only face towards the hole sector
                 const vec2& floor_look = (max_floor == sector.floor_height) ? prev_sec.center : sector.center;
                 const vec2& ceil_look  = (max_ceil == sector.ceil_height) ? sector.center : prev_sec.center;
-                const vec2& center_hole = (sector.is_hole) ? sector.center : prev_sec.center;
+                const vec2& center_hole = (sector.is_interior) ? sector.center : prev_sec.center;
                 
                 // If overlapping, then draw the entire rect and continue to the next wall
                 if (max_floor >= min_ceil) {
@@ -143,7 +143,7 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
                 r_wall_data.debug_is_ceil  = false;
             #endif
                 if (hole_present) {
-                    r_wall_data.flipped = (sector.is_hole) ? 
+                    r_wall_data.flipped = (sector.is_interior) ? 
                         (max_floor == sector.floor_height)
                         :
                         (max_floor == prev_sec.floor_height);
@@ -159,7 +159,7 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
                 r_wall_data.debug_is_ceil  = true;
             #endif
                 if (hole_present) {
-                    r_wall_data.flipped = (sector.is_hole) ? 
+                    r_wall_data.flipped = (sector.is_interior) ? 
                         (min_ceil == sector.ceil_height)
                         :
                         (min_ceil == prev_sec.ceil_height);

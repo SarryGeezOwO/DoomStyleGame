@@ -29,7 +29,7 @@ APP_NAME	:= DoomStyleGame
 EXE         := $(BIN_DIR)/$(APP_NAME).exe
 
 # Put all src sub directories in SRC_DIRS
-SRC_DIRS 	:= $(SRC_DIR) $(SRC_DIR)/core $(SRC_DIR)/renderer $(SRC_DIR)/util $(SRC_DIR)/resource $(SRC_DIR)/gmp $(SRC_DIR)/physics
+SRC_DIRS 	:= $(SRC_DIR) $(SRC_DIR)/core $(SRC_DIR)/renderer $(SRC_DIR)/util $(SRC_DIR)/resource $(SRC_DIR)/gmp $(SRC_DIR)/physics $(SRC_DIR)/imgui
 SRC 		:= $(foreach dir, $(SRC_DIRS), $(wildcard $(dir)/*.cpp))
 OBJ 		:= $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(subst $(SRC_DIR)/,,$(SRC)))
 
@@ -38,7 +38,7 @@ OBJ 		:= $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(subst $(SRC_DIR)/,,$(SRC)))
 # $(foreach dir,$(INCLUDE_DIRS),-I$(INCLUDE_DIR)/$(dir)) 	<- add this on INCLUDE
 # INCLUDE_DIRS := 			
 INCLUDE_DIRS := SDL3 GL glm SDL3_mixer earcut
-INCLUDE_SRC_DIRS := core renderer util resource gmp physics
+INCLUDE_SRC_DIRS := core renderer util resource gmp physics imgui
 LIB_DIRS 	 := SDL3 glew32 opengl32 SDL3_mixer
 INCLUDE      := -I$(INCLUDE_DIR) $(foreach dir, $(INCLUDE_DIRS), -I$(INCLUDE_DIR)/$(dir)) -I$(SRC_DIR) $(foreach dir, $(INCLUDE_SRC_DIRS), -I$(SRC_DIR)/$(dir))
 LIB	         := -L$(LIBS_DIR) $(foreach dir, $(LIB_DIRS), -l$(dir))

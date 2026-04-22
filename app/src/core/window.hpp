@@ -33,6 +33,7 @@ namespace Geez
         inline bool is_cursor_shown() const { return m_cursor_visible; }
         inline bool error() const { return m_hasError; }
         inline SDL_Window* handle() const { return m_window; }
+        inline SDL_GLContext glContext() const { return m_context; }
 
         inline F32 width()  const { return static_cast<F32>(m_size[0]); }
         inline F32 height() const { return static_cast<F32>(m_size[1]); }

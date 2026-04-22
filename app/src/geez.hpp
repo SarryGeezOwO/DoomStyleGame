@@ -10,6 +10,21 @@ IDK how inclusion or headers in general work
 Don't judge me pls 💔💔💔
 */
 
+// Vendor
+#include <gl/glew.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_opengl.h>
+#include <SDL3_mixer/SDL_mixer.h>
+
+#define IMGUI_IMPL_OPENGL_LOADER_CUSTOM
+#define IMGUI_IMPL_OPENGL_LOADER_GLEW
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_sdl3.h"
+#include "imgui/imgui_impl_opengl3.h"
+
 // Core
 #include "core/window.hpp"
 #include "core/input.hpp"
@@ -47,15 +62,6 @@ Don't judge me pls 💔💔💔
 #include "util/utility.hpp"
 #include "util/geometry_util.hpp"
 #include "util/common_types.hpp"
-
-// Vendor
-#include <gl/glew.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_opengl.h>
-#include <SDL3_mixer/SDL_mixer.h>
 
 // STD
 #include <string>

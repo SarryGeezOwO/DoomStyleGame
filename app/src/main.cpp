@@ -85,6 +85,15 @@ void init() {
     GL(glBlendEquation(GL_FUNC_ADD));
     GZ_Audio_Init();
 
+    // Imgui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    ImGui_ImplSDL3_InitForOpenGL(window->handle(), window->glContext());
+    ImGui_ImplOpenGL3_Init("#version 330");
+
     // Sub Systems
     window->set_cursor_visible(false);
 
@@ -125,6 +134,10 @@ void init() {
 void onQuit() 
 {
     GZ_LOG(GZ_SUCCESS, "Application closing...");
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();
+
     renderer.reset();
     entities.reset();
     resource.reset();
@@ -358,6 +371,8 @@ void render()
 
 int main() 
 {
+    SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
+
     if (!SDL_Init(SDL_INIT_EVENTS)) {
         GZ_LOG(GZ_FATAL, "SDL3 Initialization\n%s", SDL_GetError());
         return -1;

@@ -228,46 +228,7 @@ namespace Geez
         return hit;
     }
 
-    glm::vec2 get_inward_normal(const glm::vec2 &pa, const glm::vec2 &pb, const Polygon_t &polygon)
-    {
-        vec2 edge = pb - pa;
-        vec2 mid = get_midpoint_line(pa, pb);
-        
-        vec2 cands[2] = {
-            vec2(-edge.y,  edge.x), // CCW
-            vec2( edge.y, -edge.x)  // CW
-        };
-
-        I32 n = (I32)polygon.size();
-        for (const vec2& cand : cands) {
-            I32 intersections = 0;
-
-            for (I32 i = 0; i < n; i++) {
-                const vec2& a = point_to_vec(polygon[i]);
-                const vec2& b = point_to_vec(polygon[(i + 1) % n]);
-                
-                if (raycast_2D(mid, cand, a, b, nullptr)) {
-                    ++intersections;
-                }
-            }
-            if (intersections % 2 == 1) {
-                return normalize(cand);
-            }
-        }
-
-        return vec2(0);
-    }
-
-    Polygon_t compress_sector_to_polygon(const sector_t &sector)
-    {
-        Polygon_t res;
-        for (const Polygon_t& poly : sector.polygons) {
-            res.insert(res.end(), poly.begin(), poly.end());
-        }
-        return res;
-    }
-
-    vec2 get_facing_normal(vec2 a, vec2 b, vec2 ref)
+    vec2 get_facing_normal(vec2 a, vec2 b, vec2 ref, bool is_flipped)
     {
         vec2 dir    = normalize(b - a);
         vec2 left   = vec2(-dir.y, dir.x);
@@ -277,9 +238,9 @@ namespace Geez
         vec2 to_ref = normalize(ref - center);
 
         if (dot(left, to_ref) < 0)
-            return right;
+            return is_flipped ? left : right;;
 
-        return left;
+        return is_flipped ? right : left;
     }
 
 }

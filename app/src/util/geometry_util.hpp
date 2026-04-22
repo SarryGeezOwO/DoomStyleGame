@@ -93,8 +93,6 @@ namespace Geez
         const wall_t** out_wall
     );
 
-    glm::vec2 get_inward_normal(const glm::vec2& pa, const glm::vec2& pb, const Polygon_t& polygon);
-
     inline Polygon_t scale_polygon(const Polygon_t& polygon, F32 scale) {
         Polygon_t p(polygon);
         for (Point_t& point : p) {
@@ -104,9 +102,7 @@ namespace Geez
         return p;
     }
 
-    Polygon_t compress_sector_to_polygon(const sector_t& sector);
-
-    inline glm::vec2 get_midpoint_line(const glm::vec2& pa, const glm::vec2& pb) {
+    inline glm::vec2 get_midpoint(const glm::vec2& pa, const glm::vec2& pb) {
         return glm::vec2(
             (pa.x + pb.x) / 2.0f,
             (pa.y + pb.y) / 2.0f
@@ -133,8 +129,9 @@ namespace Geez
      * @param a First endpoint of the segment.
      * @param b Second endpoint of the segment.
      * @param ref Point used to determine which side the normal should face.
+     * @param is_flipped flip the resulting normal
      */
-    glm::vec2 get_facing_normal(glm::vec2 a, glm::vec2 b, glm::vec2 ref);
+    glm::vec2 get_facing_normal(glm::vec2 a, glm::vec2 b, glm::vec2 ref, bool is_flipped);
 }
 
 #endif

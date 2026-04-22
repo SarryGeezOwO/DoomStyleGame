@@ -299,24 +299,43 @@ void Geez::GeezMapData::update_decal(decal_t *decal, glm::vec3 new_pos, decal_t:
 
                 vec2 pa = point_to_vec(wall->point_a);
                 vec2 pb = point_to_vec(wall->point_b);
-                Polygon_t sec_poly;
-
+                
                 sector_t* sa = get_sector(wall->connected_sectors[0]);
                 sector_t* sb = get_sector(wall->connected_sectors[1]);
                 Internal::Logger::enable_logging();
+                
+                vec2 ref_point;
+                bool flip = false;
 
                 if (sa && sb) {
-                    sec_poly = compress_sector_to_polygon(*sa);
-                    Polygon_t b = compress_sector_to_polygon(*sb);
-                    sec_poly.insert(sec_poly.end(), b.begin(), b.end());
-                } 
-                else if (sa) sec_poly = compress_sector_to_polygon(*sa);
-                else if (sb) sec_poly = compress_sector_to_polygon(*sb);
+                    // Yeah
+                    F32 max_floor = max(sa->floor_height, sb->floor_height);
+                    F32 max_ceil  = max(sa->ceil_height, sb->ceil_height);
+                    F32 min_floor = min(sa->floor_height, sb->floor_height);
+                    F32 min_ceil  = min(sa->ceil_height, sb->ceil_height);
+                    bool hole_present = sa->is_hole || sb->is_hole;
+                    
+                    const vec2& floor_look = (max_floor == sb->floor_height) ? sa->center : sb->center;
+                    const vec2& ceil_look  = (max_ceil == sb->ceil_height) ? sb->center : sa->center;
+                    const vec2& center_hole = (sb->is_hole) ? sb->center : sa->center;
+                    
+                    // Determine if ceil or floor space
+                    bool floor_region = number_in_range(new_pos.y, min_floor, max_floor);
 
-                vec2 norm = get_inward_normal(pa, pb, sec_poly);
+                    ref_point = (hole_present) ? 
+                        center_hole : (floor_region ? floor_look : ceil_look);
+                    
+                        if (hole_present) {
+                        flip = (sb->is_hole) ? 
+                            (floor_region ? (max_floor == sb->floor_height) : (min_ceil == sb->ceil_height)) : 
+                            (floor_region ? (max_floor == sa->floor_height) : (min_ceil == sa->ceil_height));
+                    }
+                } 
+                else if (sa) ref_point = sa->center;
+                else if (sb) ref_point = sb->center;
+
+                vec2 norm = get_facing_normal(pa, pb, ref_point, flip);
                 decal->normal = vec3(norm.x, 0, norm.y);
-            
-                // GZ_LOG(GZ_WARNING, "%.2f, %.2f", norm.x, norm.y);
             }
             break;
 

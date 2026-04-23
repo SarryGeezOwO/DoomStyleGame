@@ -154,7 +154,7 @@ void Geez::RenderStrategyDecal::execute(IRenderData &data, const RenderContext &
 
     Mesh* mesh = context.meshes->get("DECAL");
     mat4 model = mat4(1.0f);
-        model  = translate(model, decal.position + decal.normal * 0.005f);
+        model  = translate(model, decal.position);
         model *= make_rotation_from_direction(decal.normal);
         model  = scale(model, vec3(decal.size.x, decal.size.y, 1.0f));
 
@@ -167,6 +167,9 @@ void Geez::RenderStrategyDecal::execute(IRenderData &data, const RenderContext &
         false,
         false
     );
+
+    I32 target = (decal.target == decal_t::target_t::WALL ? 1 : 2);
+    GL(glStencilFunc(GL_EQUAL, target, 0xFF));
     GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr)); // Magic 6
     context.meshes->unbind();
 }

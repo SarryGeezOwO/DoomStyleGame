@@ -78,6 +78,7 @@ namespace Geez
         glm::vec3 position;
         glm::vec3 normal;
         glm::vec2 size;
+        decal_t::target_t target;
     };
 
     struct RenderDataGameobject_t : IRenderData {

@@ -69,6 +69,7 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
             d.size           = decal.size;
             d.texture_ids[0] = decal.texture_id;
             d.shader_id      = decal_shader;
+            d.target         = decal.target;
             return d;
         }();
         submit(std::make_unique<RenderDataDecal_t>(r_decal_data));
@@ -210,9 +211,14 @@ void Geez::Renderer::submit(std::unique_ptr<IRenderData> data)
 void Geez::Renderer::flush()
 {
     ImGui::Render();
-    glEnable(GL_DEPTH_TEST);
+    
+    // Stencil rule
+    GL(glStencilMask(0xFF));
+    GL(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
+
     GL(glClearColor(0.1f, 0.1f, 0.1f, 1.0f));
-    GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    GL(glClearStencil(0));
+    GL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT));
 
     if (!context->validate()) {
         return;
@@ -224,13 +230,32 @@ void Geez::Renderer::flush()
     context->active_camera->perspective();
     for (int type = 0; type < R_RENDER_TYPE_COUNT; ++type) {
 
-        if (type == R_GUI) {
-            glDisable(GL_DEPTH_TEST);
-            context->active_camera->orthographic();
+        context->active_camera->perspective();
+        glDisable(GL_POLYGON_OFFSET_FILL);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_STENCIL_TEST);
+
+        if (type == R_WALL) {
+            GL(glStencilFunc(GL_ALWAYS, 1, 0xFF)); // Write 1 on walls
         }
-        else {
-            glEnable(GL_DEPTH_TEST);
-            context->active_camera->perspective();
+        else if (type == R_SECTOR) {
+            GL(glStencilFunc(GL_ALWAYS, 2, 0xFF)); // Write 2 on sectors
+        }
+        else if (type == R_DECAL) {
+            glEnable(GL_POLYGON_OFFSET_FILL);
+            GL(glPolygonOffset(-1.0f, -1.0f)); // Closer to camera
+            GL(glStencilMask(0x00));
+            GL(glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP));
+            // GL(glStencilFunc(GL_EQUAL, 1, 0xFF));  <- this can be found in render_strategy
+        } 
+        else if (type == R_GAMEOBJECT) {
+            GL(glClear(GL_STENCIL_BUFFER_BIT));
+            glDisable(GL_STENCIL_TEST);
+        }
+        else if (type == R_GUI) {
+            glDisable(GL_DEPTH_TEST);
+            glDisable(GL_STENCIL_TEST);
+            context->active_camera->orthographic();
         }
 
         for (auto& data_ptr : render_buckets[type]) {

@@ -3,7 +3,13 @@
 
 Geez::Window::Window(const std::string &title, const glm::ivec2& size)
     : m_size(size)
-{
+{   
+    // Setup OpenGL Context
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+
     m_window = SDL_CreateWindow(title.c_str(), 
         size.x, size.y, SDL_WINDOW_OPENGL | SDL_WINDOW_HIGH_PIXEL_DENSITY);
     if (m_window == nullptr) {
@@ -11,11 +17,6 @@ Geez::Window::Window(const std::string &title, const glm::ivec2& size)
         m_hasError = true;
         return;
     }
-
-    // Setup OpenGL Context
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
     m_context = SDL_GL_CreateContext(m_window);
     if (m_context == nullptr) {

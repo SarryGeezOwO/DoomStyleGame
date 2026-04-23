@@ -342,14 +342,21 @@ void update()
 
 void post_update() {
     camera.position = player->position + vec3(0, (player->physics->height * 0.5f), 0);
+    I32 stencil_size;
+    SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &stencil_size);
+    I32 stencilBits = 0;
+    glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
 
     ImGui::Begin("Testing");
-    ImGui::Text("FPS:        %.4f",  runtime_fps);
-    ImGui::Text("Ticks:      %d",    frame_tick);
-    ImGui::Text("Game Time:  %.4fs", game_time);
-    ImGui::Text("Delta Time: %.4fs", delta_time);
+    ImGui::Text("FPS:          %.4f",  runtime_fps);
+    ImGui::Text("Ticks:        %d",    frame_tick);
+    ImGui::Text("Game Time:    %.4fs", game_time);
+    ImGui::Text("Delta Time:   %.4fs", delta_time);
     ImGui::NewLine(); ImGui::Separator(); ImGui::NewLine();
-    ImGui::Text("[BM] Update Time: %s", update_time.c_str());
+    ImGui::Text("SDL Stencil:  %d", stencil_size);
+    ImGui::Text("OGL Stencil:  %d", stencilBits);
+    ImGui::Text("Update Time:  %s", update_time.c_str());
+
     ImGui::End();
 }
 
@@ -406,7 +413,7 @@ int main()
 {
     SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
 
-    if (!SDL_Init(SDL_INIT_EVENTS)) {
+    if (!SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO)) {
         GZ_LOG(GZ_FATAL, "SDL3 Initialization\n%s", SDL_GetError());
         return -1;
     }

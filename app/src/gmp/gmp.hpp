@@ -35,6 +35,12 @@ namespace Geez
         decal_t* get_decal(U32 decal_id);
         const decal_t* get_decal(U32 decal_id) const; 
 
+        std::vector<decal_t*> get_wall_decals(U32 wall_id);
+        std::vector<const decal_t*> get_wall_decals(U32 wall_id) const; 
+
+        std::vector<decal_t*> get_sector_decals(U32 sector_id);
+        std::vector<const decal_t*> get_sector_decals(U32 sector_id) const; 
+
         wall_t* get_wall(U32 wall_id);
         const wall_t* get_wall(U32 wall_id) const;
 

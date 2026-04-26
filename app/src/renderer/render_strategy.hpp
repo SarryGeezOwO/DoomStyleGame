@@ -12,15 +12,16 @@ namespace Geez
         virtual ~IRenderStrategy() = default;
     };
 
+    struct IRenderDecalStrategy {
+        virtual void execute(IRenderDecalData& data, const RenderContext& context) = 0;
+        virtual ~IRenderDecalStrategy() = default;
+    };
+
     struct RenderStrategyWall : public IRenderStrategy {
         void execute(IRenderData& data, const RenderContext& context) override;
     };
 
     struct RenderStrategySector : public IRenderStrategy {
-        void execute(IRenderData& data, const RenderContext& context) override;
-    };
-
-    struct RenderStrategyDecal : public IRenderStrategy {
         void execute(IRenderData& data, const RenderContext& context) override;
     };
 
@@ -30,6 +31,16 @@ namespace Geez
 
     struct RenderStrategyGUI : public IRenderStrategy {
         void execute(IRenderData& data, const RenderContext& context) override;
+    };
+
+
+
+    struct RenderStrategyDecalWall : public IRenderDecalStrategy {
+        void execute(IRenderDecalData& data, const RenderContext& context) override;
+    };
+    
+    struct RenderStrategyDecalSector : public IRenderDecalStrategy {
+        void execute(IRenderDecalData& data, const RenderContext& context) override;
     };
 }
 

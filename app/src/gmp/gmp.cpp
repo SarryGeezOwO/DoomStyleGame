@@ -384,10 +384,12 @@ namespace Geez {
 
     std::vector<decal_t *> GeezMapData::get_wall_decals(U32 wall_id)
     {
-        const std::vector<decal_t *> carr = get_wall_decals(wall_id);
-        std::vector<decal_t *> arr;
+        const GeezMapData* self = this;
+        const std::vector<const decal_t *> carr = self->get_wall_decals(wall_id);
+
+        std::vector<decal_t*> arr;
         for (const decal_t* d : carr) {
-            arr.push_back(const_cast<decal_t *>(static_cast<const decal_t *>(d)));
+            arr.push_back(const_cast<decal_t*>(d));
         }
         return arr;
     }
@@ -410,10 +412,12 @@ namespace Geez {
 
     std::vector<decal_t *> GeezMapData::get_sector_decals(U32 sector_id)
     {
-        const std::vector<decal_t *> carr = get_sector_decals(sector_id);
+        const GeezMapData* self = this;
+        const std::vector<const decal_t *> carr = self->get_sector_decals(sector_id);
+
         std::vector<decal_t *> arr;
         for (const decal_t* d : carr) {
-            arr.push_back(const_cast<decal_t *>(static_cast<const decal_t *>(d)));
+            arr.push_back(const_cast<decal_t*>(d));
         }
         return arr;
     }

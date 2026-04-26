@@ -20,10 +20,16 @@ namespace Geez
         R_NONE = -1,    // Skipped at rendering
         R_WALL, 
         R_SECTOR,
-        R_DECAL,
         R_GAMEOBJECT,
         R_GUI,          // Not including Texts
         R_RENDER_TYPE_COUNT
+    };
+
+    enum RenderDecalType {
+        RD_NONE = -1,
+        RD_WALL,
+        RD_SECTOR,
+        RD_RENDERDECAL_TYPE_COUNT
     };
 
     // pure Virtual
@@ -38,6 +44,17 @@ namespace Geez
         ResourceID texture_ids[3]; // 3 texture slots avail or something
     };
 
+    struct IRenderDecalData {
+        friend struct Renderer;
+    protected:
+        RenderDecalType type = RD_NONE;
+
+    public:    
+        ResourceID shader_id  = "";
+        ResourceID texture_id = "";
+        U32 target_id;
+    };
+
 // ================================================= //
 //                   SPECIFIC DATA                   //
 // ================================================= //
@@ -45,6 +62,7 @@ namespace Geez
     struct RenderDataWall_t   : IRenderData {
         RenderDataWall_t() { type = R_WALL; }
 
+        U32 id;
         glm::vec2 a; 
         glm::vec2 b;
         glm::vec2 ref_center; 
@@ -61,6 +79,7 @@ namespace Geez
     struct RenderDataSector_t : IRenderData {
         RenderDataSector_t() { type = R_SECTOR; }
         
+        U32 id;
         U32 index_count;
         F32 floor;
         F32 ceil;
@@ -70,15 +89,6 @@ namespace Geez
         #ifdef GZ_BUILD_DEBUG
             glm::vec2 center;
         #endif
-    };
-
-    struct RenderDataDecal_t : IRenderData {
-        RenderDataDecal_t() { type = R_DECAL; }
-        
-        glm::vec3 position;
-        glm::vec3 normal;
-        glm::vec2 size;
-        decal_t::target_t target;
     };
 
     struct RenderDataGameobject_t : IRenderData {
@@ -94,6 +104,15 @@ namespace Geez
         glm::vec2 screen_pos;
         glm::vec2 size;
         F32 angle;
+    };
+
+    // ============ DECALS ============== //
+    struct RenderDataDecal_t : IRenderDecalData {
+        RenderDataDecal_t(RenderDecalType t) { type = t; }
+        
+        glm::vec3 position;
+        glm::vec3 normal;
+        glm::vec2 size;
     };
 }
 

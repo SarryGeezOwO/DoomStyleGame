@@ -46,11 +46,14 @@ bool Geez::RenderContext::validate() const
 Geez::Renderer::Renderer()
 {
     // Load Strategies here
-    strategies[R_WALL]       = std::make_unique<RenderStrategyWall>();
-    strategies[R_SECTOR]     = std::make_unique<RenderStrategySector>();
-    strategies[R_DECAL]      = std::make_unique<RenderStrategyDecal>();
-    strategies[R_GAMEOBJECT] = std::make_unique<RenderStrategyGameobject>();
-    strategies[R_GUI]        = std::make_unique<RenderStrategyGUI>();
+    strategies[R_WALL]         = std::make_unique<RenderStrategyWall>();
+    strategies[R_SECTOR]       = std::make_unique<RenderStrategySector>();
+    strategies[R_GAMEOBJECT]   = std::make_unique<RenderStrategyGameobject>();
+    strategies[R_GUI]          = std::make_unique<RenderStrategyGUI>();
+
+    // Decal surface types
+    strategies_decal[RD_WALL]   = std::make_unique<RenderStrategyDecalWall>();
+    strategies_decal[RD_SECTOR] = std::make_unique<RenderStrategyDecalSector>();
 }
 
 Geez::Renderer::~Renderer()
@@ -63,16 +66,16 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
     // Decals
     for (const decal_t& decal : map.get_decals()) {
         auto r_decal_data = [&]{
-            RenderDataDecal_t d{};
-            d.position       = decal.position;
-            d.normal         = decal.normal;
-            d.size           = decal.size;
-            d.texture_ids[0] = decal.texture_id;
-            d.shader_id      = decal_shader;
-            d.target         = decal.target;
-            return d;
-        }();
-        submit(std::make_unique<RenderDataDecal_t>(r_decal_data));
+                RenderDataDecal_t d((decal.target == decal_t::WALL) ? RD_WALL : RD_SECTOR);
+                d.position    = decal.position;
+                d.normal      = decal.normal;
+                d.size        = decal.size;
+                d.texture_id  = decal.texture_id;
+                d.shader_id   = decal_shader;
+                d.target_id   = decal.target_id;
+                return d;
+            }();
+        submit_decal(std::make_unique<RenderDataDecal_t>(r_decal_data));
     }
 
     // Wall_ID, Sector_ID
@@ -89,6 +92,7 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
 
             auto r_wall_data = [&]{
                 RenderDataWall_t d{};
+                d.id             = wall_id;
                 d.flipped        = false;
                 d.shader_id      = lit_shader;
                 d.texture_ids[0] = wall.texture_id;
@@ -180,6 +184,7 @@ void Geez::Renderer::submit_map_geometry(GeezMapData &map)
         // Render Floor and Ceil, Floor and ceils are guranteed to be opaque objects
         submit(std::make_unique<RenderDataSector_t>([&]{
             RenderDataSector_t d{};
+            d.id             = sector.id;
             d.texture_ids[0] = sector.texture_id_floor;
             d.texture_ids[1] = sector.texture_id_ceil;
             d.shader_id      = lit_shader;
@@ -202,19 +207,32 @@ void Geez::Renderer::submit(std::unique_ptr<IRenderData> data)
         return;
     
     RenderType type = data->type;
-    if (type == R_NONE || type > R_GUI) 
+    if (type == R_NONE || type >= R_RENDER_TYPE_COUNT) 
         return;
 
     render_buckets[static_cast<size_t>(type)].push_back(std::move(data));
 }
 
+void Geez::Renderer::submit_decal(std::unique_ptr<IRenderDecalData> data)
+{
+    if (!data) 
+        return;
+    
+    RenderDecalType type = data->type;
+    if (type == RD_NONE || type >= RD_RENDERDECAL_TYPE_COUNT) 
+        return;
+
+    decal_buckets[static_cast<size_t>(type)].push_back(std::move(data));   
+}
+
 void Geez::Renderer::flush()
 {
     ImGui::Render();
-    
+
     // Stencil rule
     GL(glStencilMask(0xFF));
     GL(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
+    GL(glStencilFunc(GL_ALWAYS, 1, 0xFF));
 
     GL(glClearColor(0.1f, 0.1f, 0.1f, 1.0f));
     GL(glClearStencil(0));
@@ -225,7 +243,7 @@ void Geez::Renderer::flush()
     }
 
     // Map rendering sequence
-    // Wall -> Sector -> Decal -> GameObject -> GUI
+    // Wall -> Decal(W) -> Sector -> Decal(S) -> GameObject -> GUI
 
     context->active_camera->perspective();
     for (int type = 0; type < R_RENDER_TYPE_COUNT; ++type) {
@@ -236,19 +254,14 @@ void Geez::Renderer::flush()
         glEnable(GL_STENCIL_TEST);
 
         if (type == R_WALL) {
-            GL(glStencilFunc(GL_ALWAYS, 1, 0xFF)); // Write 1 on walls
+            // ...
         }
         else if (type == R_SECTOR) {
-            GL(glStencilFunc(GL_ALWAYS, 2, 0xFF)); // Write 2 on sectors
+            decal_buckets[RD_WALL].clear();
+            // ...
         }
-        else if (type == R_DECAL) {
-            glEnable(GL_POLYGON_OFFSET_FILL);
-            GL(glPolygonOffset(-1.0f, -1.0f)); // Closer to camera
-            GL(glStencilMask(0x00));
-            GL(glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP));
-            // GL(glStencilFunc(GL_EQUAL, 1, 0xFF));  <- this can be found in render_strategy
-        } 
         else if (type == R_GAMEOBJECT) {
+            decal_buckets[RD_SECTOR].clear();
             GL(glClear(GL_STENCIL_BUFFER_BIT));
             glDisable(GL_STENCIL_TEST);
         }
@@ -260,8 +273,47 @@ void Geez::Renderer::flush()
 
         for (auto& data_ptr : render_buckets[type]) {
             strategies[type]->execute(*data_ptr, *context);
-        }
 
+            // render decals attached to surfaces their stencil values
+            if (type == R_WALL) {
+                glEnable(GL_POLYGON_OFFSET_FILL);
+                GL(glPolygonOffset(-1.0f, -1.0f)); // Closer to camera
+                GL(glStencilMask(0x00));
+                GL(glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP));
+                GL(glStencilFunc(GL_EQUAL, 1, 0xFF));
+            
+                for (auto& decal : decal_buckets[RD_WALL]) {
+                    if (decal->target_id == static_cast<RenderDataWall_t&>(*data_ptr).id) {
+                        strategies_decal[RD_WALL]->execute(*decal, *context);
+                    }
+                }
+
+                glDisable(GL_POLYGON_OFFSET_FILL);
+                GL(glStencilMask(0xFF));
+                GL(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
+                GL(glStencilFunc(GL_ALWAYS, 1, 0xFF));
+                GL(glClear(GL_STENCIL_BUFFER_BIT));
+            }
+            else if (type == R_SECTOR) {
+                glEnable(GL_POLYGON_OFFSET_FILL);
+                GL(glPolygonOffset(-1.0f, -1.0f)); // Closer to camera
+                GL(glStencilMask(0x00));
+                GL(glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP));
+                GL(glStencilFunc(GL_EQUAL, 2, 0xFF));
+
+                for (auto& decal : decal_buckets[RD_SECTOR]) {
+                    if (decal->target_id == static_cast<RenderDataSector_t&>(*data_ptr).id) {
+                        strategies_decal[RD_SECTOR]->execute(*decal, *context);
+                    } 
+                }
+                
+                glDisable(GL_POLYGON_OFFSET_FILL);
+                GL(glStencilMask(0xFF));
+                GL(glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE));
+                GL(glStencilFunc(GL_ALWAYS, 2, 0xFF));
+                GL(glClear(GL_STENCIL_BUFFER_BIT));
+            }
+        }
         render_buckets[type].clear();
     }
 

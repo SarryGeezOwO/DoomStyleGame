@@ -144,36 +144,6 @@ void Geez::RenderStrategySector::execute(IRenderData &data, const RenderContext 
     #endif
 }
 
-void Geez::RenderStrategyDecal::execute(IRenderData &data, const RenderContext &context)
-{
-    const RenderDataDecal_t& decal = static_cast<RenderDataDecal_t&>(data);
-    if (!context.meshes->exists("DECAL")) {
-        GZ_LOG_FORCE(GZ_FAIL, "Cannot draw decal, no decal mesh available.");
-        return;
-    }
-
-    Mesh* mesh = context.meshes->get("DECAL");
-    mat4 model = mat4(1.0f);
-        model  = translate(model, decal.position);
-        model *= make_rotation_from_direction(decal.normal);
-        model  = scale(model, vec3(decal.size.x, decal.size.y, 1.0f));
-
-    mesh->bind();
-    bind(
-        context,
-        model,
-        decal.shader_id,
-        decal.texture_ids[0],
-        false,
-        false
-    );
-
-    I32 target = (decal.target == decal_t::target_t::WALL ? 1 : 2);
-    GL(glStencilFunc(GL_EQUAL, target, 0xFF));
-    GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr)); // Magic 6
-    context.meshes->unbind();
-}
-
 void Geez::RenderStrategyGameobject::execute(IRenderData &data, const RenderContext &context)
 {
     const RenderDataGameobject_t& object = static_cast<RenderDataGameobject_t&>(data);
@@ -230,5 +200,69 @@ void Geez::RenderStrategyGUI::execute(IRenderData &data, const RenderContext &co
         false
     );
     GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr)); // Magic 6  
+    context.meshes->unbind();
+}
+
+
+
+
+
+
+
+
+
+void Geez::RenderStrategyDecalWall::execute(IRenderDecalData &data, const RenderContext &context)
+{
+    const RenderDataDecal_t& decal = static_cast<RenderDataDecal_t&>(data);
+    if (!context.meshes->exists("DECAL")) {
+        GZ_LOG_FORCE(GZ_FAIL, "Cannot draw decal, no decal mesh available.");
+        return;
+    }    
+
+    Mesh* mesh = context.meshes->get("DECAL");
+    mat4 model = mat4(1.0f);
+        model  = translate(model, decal.position);
+        model *= make_rotation_from_direction(decal.normal);
+        model  = scale(model, vec3(decal.size.x, decal.size.y, 1.0f));
+
+    mesh->bind();
+    bind(
+        context,
+        model,
+        decal.shader_id,
+        decal.texture_id,
+        false,
+        false
+    );
+
+    GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr)); // Magic 6
+    context.meshes->unbind();
+}
+
+void Geez::RenderStrategyDecalSector::execute(IRenderDecalData &data, const RenderContext &context)
+{
+    const RenderDataDecal_t& decal = static_cast<RenderDataDecal_t&>(data);
+    if (!context.meshes->exists("DECAL")) {
+        GZ_LOG_FORCE(GZ_FAIL, "Cannot draw decal, no decal mesh available.");
+        return;
+    }  
+
+    Mesh* mesh = context.meshes->get("DECAL");
+    mat4 model = mat4(1.0f);
+        model  = translate(model, decal.position);
+        model *= make_rotation_from_direction(decal.normal);
+        model  = scale(model, vec3(decal.size.x, decal.size.y, 1.0f));
+
+    mesh->bind();
+    bind(
+        context,
+        model,
+        decal.shader_id,
+        decal.texture_id,
+        false,
+        false
+    );
+    
+    GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr)); // Magic 6
     context.meshes->unbind();
 }

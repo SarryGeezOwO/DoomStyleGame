@@ -32,8 +32,10 @@ namespace Geez
     struct Renderer
     {
     private:
+        std::array<std::vector<std::unique_ptr<IRenderDecalData>>, RenderDecalType::RD_RENDERDECAL_TYPE_COUNT> decal_buckets;
         std::array<std::vector<std::unique_ptr<IRenderData>>, RenderType::R_RENDER_TYPE_COUNT> render_buckets;
         std::unique_ptr<IRenderStrategy> strategies[RenderType::R_RENDER_TYPE_COUNT];
+        std::unique_ptr<IRenderDecalStrategy> strategies_decal[RenderDecalType::RD_RENDERDECAL_TYPE_COUNT];
         std::unique_ptr<RenderContext> context;
 
     public:
@@ -53,6 +55,9 @@ namespace Geez
 
         // Submit any RenderDataTypes here
         void submit(std::unique_ptr<IRenderData> data);
+
+        // Submit any RenderDataDecalTypes here
+        void submit_decal(std::unique_ptr<IRenderDecalData> data);
         
         // Renders until queue is empty
         void flush();

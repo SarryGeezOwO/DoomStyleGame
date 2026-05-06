@@ -26,6 +26,7 @@ Don't judge me pls 💔💔💔
 #include "imgui/imgui_impl_opengl3.h"
 
 // Core
+#include "core/config.hpp"
 #include "core/window.hpp"
 #include "core/input.hpp"
 #include "core/game_object.hpp"

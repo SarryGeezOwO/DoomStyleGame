@@ -37,7 +37,7 @@ OBJ 		:= $(patsubst %.cpp, $(OBJ_DIR)/%.o, $(subst $(SRC_DIR)/,,$(SRC)))
 # SDL3 SDL3_image Eigen imgui 								<- example on INCLUDE_DIRS
 # $(foreach dir,$(INCLUDE_DIRS),-I$(INCLUDE_DIR)/$(dir)) 	<- add this on INCLUDE
 # INCLUDE_DIRS := 			
-INCLUDE_DIRS := SDL3 GL glm SDL3_mixer earcut
+INCLUDE_DIRS := SDL3 GL glm SDL3_mixer earcut mINI
 INCLUDE_SRC_DIRS := core renderer util resource gmp physics imgui
 LIB_DIRS 	 := SDL3 glew32 opengl32 SDL3_mixer
 INCLUDE      := -I$(INCLUDE_DIR) $(foreach dir, $(INCLUDE_DIRS), -I$(INCLUDE_DIR)/$(dir)) -I$(SRC_DIR) $(foreach dir, $(INCLUDE_SRC_DIRS), -I$(SRC_DIR)/$(dir))

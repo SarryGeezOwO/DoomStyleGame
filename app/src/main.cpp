@@ -25,7 +25,13 @@
 using namespace Geez;
 using namespace glm;
 
-#define MAX_MIXER_CHANNEL 32
+// Not a appconfig more like a build configuration? (not sure, subject to change)
+#ifdef OVERRIDE_MAX_MIXER_CHANNEL
+    #define MAX_MIXER_CHANNEL OVERRIDE_MAX_MIXER_CHANNEL
+#else
+    #define MAX_MIXER_CHANNEL 32
+#endif
+
 static const vec3 WORLD_UP(0.0f,1.0f,0.0f);
 static const char* unlit_shader_name = "unlit_texture";
 static const char* light_shader_name = "lit_texture";
@@ -43,10 +49,11 @@ static GameObject* player = nullptr;
 static bool isRunning = true;
 static std::unique_ptr<Window> window;
 static std::unique_ptr<AudioPlayer> audio;
-static std::unique_ptr<Renderer> renderer;
+static std::unique_ptr<ConfigLoader> config;
 static std::unique_ptr<ResourceManager> resource;
 static std::unique_ptr<GameObjectManager> entities;
 static std::unique_ptr<MeshManager> meshes;
+static std::unique_ptr<Renderer> renderer;
 static Camera camera(WORLD_UP);
 static Input input{};
 static PhysicsSystem physics{};
@@ -80,6 +87,21 @@ void on_mouse_move(const vec2& screen, const vec2& relative) {
 
 void init() {
     // Configuration
+    const std::filesystem::path cfg_path = GetBasePath("geez.ini");
+    config = std::make_unique<ConfigLoader>(cfg_path);
+    config->set_defaults({
+        {"controls", {
+            {"sensitivity", "0.1"}}
+        },
+        {"physics", {
+            {"gravity", "-9.8"}}
+        }
+    });
+
+    config->read_value("controls", "sensitivity", cam_sensitivity);
+    config->read_value("physics", "gravity", physics.gravity);
+
+    // OpenGL Configuration
     GL(glEnable(GL_DEPTH_TEST));
     GL(glEnable(GL_BLEND));
     GL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
@@ -114,8 +136,6 @@ void init() {
 
     // Sub Systems
     window->set_cursor_visible(false);
-
-    physics.gravity = -9.8f; // Real!!!
     renderer  = std::make_unique<Renderer>();
     audio     = std::make_unique<AudioPlayer>(MAX_MIXER_CHANNEL);
     entities  = std::make_unique<GameObjectManager>();
@@ -162,6 +182,7 @@ void onQuit()
     meshes.reset();
     window.reset();
     audio.reset();
+    config.reset();
 
     GZ_Audio_Quit();
     SDL_Quit();
@@ -348,15 +369,19 @@ void post_update() {
     glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
 
     ImGui::Begin("Testing");
+    ImGui::SeparatorText("exposed engine"); ImGui::NewLine();
     ImGui::Text("FPS:          %.4f",  runtime_fps);
     ImGui::Text("Ticks:        %d",    frame_tick);
     ImGui::Text("Game Time:    %.4fs", game_time);
     ImGui::Text("Delta Time:   %.4fs", delta_time);
-    ImGui::NewLine(); ImGui::Separator(); ImGui::NewLine();
+    ImGui::NewLine(); ImGui::SeparatorText("internal engine"); ImGui::NewLine();
+    ImGui::Text("Mixer Channels:       %d", MAX_MIXER_CHANNEL);
+    ImGui::Text("Active Mixer Channel: %d", AudioPlayer::Internal::get_active_mixer_channel_count(*audio.get()));
     ImGui::Text("SDL Stencil:  %d", stencil_size);
     ImGui::Text("OGL Stencil:  %d", stencilBits);
     ImGui::Text("Update Time:  %s", update_time.c_str());
-
+    ImGui::NewLine(); ImGui::SeparatorText("config"); ImGui::NewLine();
+    ImGui::Text("Sensitivity %.2f", cam_sensitivity);
     ImGui::End();
 }
 

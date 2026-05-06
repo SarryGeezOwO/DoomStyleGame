@@ -7,24 +7,32 @@
 
 namespace Geez
 {
+    inline std::string GetBasePath() {
+        return SDL_GetBasePath();
+    }
+
+    inline std::string GetBasePath(const std::string& ex) {
+        return SDL_GetBasePath() + ("\\" + ex);
+    }
+
     inline std::string GetResourcePath() {
-        return SDL_GetBasePath() + std::string("\\assets");
+        return GetBasePath("assets");
     }
 
     inline std::string GetShaderPath(const std::string& file_name) {
-        return SDL_GetBasePath() + ("\\assets\\shaders\\" + file_name);
+        return GetBasePath("assets\\shaders\\" + file_name);
     }
 
     inline std::string GetTexturePath(const std::string& file_name) {
-        return SDL_GetBasePath() + ("\\assets\\textures\\" + file_name);
+        return GetBasePath("assets\\textures\\" + file_name);
     }
 
     inline std::string GetAudioPath(const std::string& file_name) {
-        return SDL_GetBasePath() + ("\\assets\\audio\\" + file_name);
+        return GetBasePath("assets\\audio\\" + file_name);
     }
 
     inline std::string GetMapDataPath(const std::string& file_name) {
-        return SDL_GetBasePath() + ("\\assets\\maps\\" + file_name);
+        return GetBasePath("assets\\maps\\" + file_name);
     }
 
     inline std::string to_lower(const std::string& str) {

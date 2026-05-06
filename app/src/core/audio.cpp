@@ -120,3 +120,13 @@ void Geez::AudioPlayer::play(Audio *audio)
     GZ_LOG(GZ_FAIL, "No Audio Mixer channel available to play [%s]", audio->m_resource_id.c_str());
 }
 
+Geez::U32 Geez::AudioPlayer::Internal::get_active_mixer_channel_count(AudioPlayer& player)
+{
+    U32 out = 0;
+    for (U32 i = 0; i < player.m_channel_count; i++) {
+
+        auto t = player.m_channels[i];
+        out += (MIX_TrackPlaying(t) || MIX_TrackPaused(t));
+    }
+    return out;
+}

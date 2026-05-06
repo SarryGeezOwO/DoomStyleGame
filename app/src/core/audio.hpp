@@ -110,6 +110,10 @@ public:
      * @note Fails silently if no channels are available
      */
     void play(Audio* audio);
+
+    struct Internal {
+        static U32 get_active_mixer_channel_count(AudioPlayer& player);
+    };
 };
 
 }

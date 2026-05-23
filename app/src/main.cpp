@@ -95,6 +95,9 @@ void init() {
         },
         {"physics", {
             {"gravity", "-9.8"}}
+        },
+        {"audio", {
+            {"master_volume", "1.0"}}
         }
     });
 

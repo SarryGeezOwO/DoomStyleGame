@@ -44,7 +44,7 @@ namespace Geez {
                     GZ_LOG_T(GZ_FAIL, 1, "Failed to generate geez.ini");
             }
             cfg->read(content);
-        }
+        } 
 
         ~ConfigLoader() {
             GZ_LOG(GZ_DEBUG, "ConfigLoader quit");
@@ -71,12 +71,13 @@ namespace Geez {
         }
 
         template <typename T>
-        void read_value(
+        bool read_value(
             const std::string& section, const std::string& key, T& out) {
             
             if (content.has(section)) {
                 if (content[section].has(key)) {
                     out = convert_from_str<T>(content[section][key]);
+                    return true;
                 }
                 #ifdef GZ_BUILD_DEBUG
                 else GZ_LOG(GZ_FAIL, "config section [%s] has no key [%s]", section, key);
@@ -85,6 +86,8 @@ namespace Geez {
             #ifdef GZ_BUILD_DEBUG
             else GZ_LOG(GZ_FAIL, "config has no section [%s]", section);
             #endif
+
+            return false;
         }
     };
 

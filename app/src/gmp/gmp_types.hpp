@@ -40,9 +40,23 @@ namespace Geez
         ResourceID texture_id = "Wall";
         std::array<I32, 2> connected_sectors = {-1, -1}; // Ids of SectorA, SectorB
 
+        // The Floor region normal if is_portal is true,
+        // this also returns the solid wall normal if is_portal is false
+        inline glm::vec3 normal_front() const {
+            return m_normal[0];
+        }
+
+        // The Ceil region normal if is_portal is true
+        // asserts false if is_portal is false
+        inline glm::vec3 normal_back() const {
+            assert(is_portal);
+            return m_normal[1];
+        }
+        
     friend struct GeezMapData;
     protected: // Used for buffer generation
         std::vector<U32> scary_sectors = {};
+        std::array<glm::vec3, 2> m_normal = {};
     };
 
     struct sector_t {

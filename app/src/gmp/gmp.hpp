@@ -17,6 +17,9 @@ namespace Geez
         std::unordered_map<U32, std::string> texture_references;
         std::unordered_map<U32, std::shared_ptr<sector_mesh_t>> sector_meshes; // Sector_id
 
+        void update_wall_normal(wall_t& wall);
+        void update_all_wall_normal();
+
     public:
         GeezMapData(const std::string& file);
         ~GeezMapData();

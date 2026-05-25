@@ -257,12 +257,70 @@ namespace Geez {
             // Insert to map with sectorID as key
             sector_meshes.emplace(sector.id, std::move(mesh));
         }
+        update_all_wall_normal();
     }
 
     bool GeezMapData::is_sector_scary(U32 sector_id, U32 wall_id)
     {
         wall_t* wall = get_wall(wall_id); 
         return (std::find(wall->scary_sectors.begin(), wall->scary_sectors.end(), sector_id) == wall->scary_sectors.end());
+    }
+
+    void GeezMapData::update_wall_normal(wall_t &wall)
+    {
+        // Compute wall normal
+        Internal::Logger::disable_logging();
+        vec2 pa = point_to_vec(wall.point_a);
+        vec2 pb = point_to_vec(wall.point_b);
+        
+        sector_t* sa = get_sector(wall.connected_sectors[0]);
+        sector_t* sb = get_sector(wall.connected_sectors[1]);
+        Internal::Logger::enable_logging();
+        
+        // bool here is 'flip'
+        std::vector<std::pair<vec2, bool>> ref_point{};
+        if (sa && sb) {
+            F32 max_floor = max(sa->floor_height, sb->floor_height);
+            F32 max_ceil  = max(sa->ceil_height, sb->ceil_height);
+            F32 min_ceil  = min(sa->ceil_height, sb->ceil_height);
+            bool hole_present = sa->is_interior || sb->is_interior;
+            
+            const vec2& floor_look = (max_floor == sb->floor_height) ? sa->center : sb->center;
+            const vec2& ceil_look  = (max_ceil == sb->ceil_height) ? sb->center : sa->center;
+            const vec2& center_hole = (sb->is_interior) ? sb->center : sa->center;
+
+            // Floor
+            ref_point.push_back({
+                (hole_present) ? center_hole : floor_look,
+                hole_present * ((sb->is_interior) ? 
+                    (max_floor == sb->floor_height) : 
+                    (max_floor == sa->floor_height)
+                )
+            });
+
+            // Ceil
+            ref_point.push_back({
+                (hole_present) ? center_hole : ceil_look,
+                hole_present * ((sb->is_interior) ? 
+                    (min_ceil == sb->ceil_height) : 
+                    (min_ceil == sa->ceil_height)
+                )
+            });
+        } 
+        else if (sa) ref_point.push_back({sa->center, false});
+        else if (sb) ref_point.push_back({sa->center, false});
+
+        for (size_t i = 0; i < ref_point.size(); i++) {
+            vec2 norm = get_facing_normal(pa, pb, ref_point[i].first, ref_point[i].second);
+            wall.m_normal[i] = vec3(norm.x, 0, norm.y);
+        }
+    }
+
+    void GeezMapData::update_all_wall_normal()
+    {
+        for (wall_t& wall : walls) {
+            update_wall_normal(wall);
+        }
     }
 
     U32 GeezMapData::make_decal(vec3 pos, vec2 size, ResourceID texture_id, decal_t::target_t target, U32 target_id)
@@ -297,46 +355,22 @@ namespace Geez {
                         Internal::Logger::enable_logging();
                         break;
                     }
-
-                    vec2 pa = point_to_vec(wall->point_a);
-                    vec2 pb = point_to_vec(wall->point_b);
                     
                     sector_t* sa = get_sector(wall->connected_sectors[0]);
                     sector_t* sb = get_sector(wall->connected_sectors[1]);
                     Internal::Logger::enable_logging();
-                    
-                    vec2 ref_point;
-                    bool flip = false;
 
                     if (sa && sb) {
-                        // Yeah
-                        F32 max_floor = max(sa->floor_height, sb->floor_height);
-                        F32 max_ceil  = max(sa->ceil_height, sb->ceil_height);
-                        F32 min_floor = min(sa->floor_height, sb->floor_height);
-                        F32 min_ceil  = min(sa->ceil_height, sb->ceil_height);
-                        bool hole_present = sa->is_interior || sb->is_interior;
-                        
-                        const vec2& floor_look = (max_floor == sb->floor_height) ? sa->center : sb->center;
-                        const vec2& ceil_look  = (max_ceil == sb->ceil_height) ? sb->center : sa->center;
-                        const vec2& center_hole = (sb->is_interior) ? sb->center : sa->center;
-                        
                         // Determine if ceil or floor space
+                        F32 max_floor = max(sa->floor_height, sb->floor_height);
+                        F32 min_floor = min(sa->floor_height, sb->floor_height);
                         bool floor_region = number_in_range(new_pos.y, min_floor, max_floor);
 
-                        ref_point = (hole_present) ? 
-                            center_hole : (floor_region ? floor_look : ceil_look);
-                        
-                            if (hole_present) {
-                            flip = (sb->is_interior) ? 
-                                (floor_region ? (max_floor == sb->floor_height) : (min_ceil == sb->ceil_height)) : 
-                                (floor_region ? (max_floor == sa->floor_height) : (min_ceil == sa->ceil_height));
-                        }
-                    } 
-                    else if (sa) ref_point = sa->center;
-                    else if (sb) ref_point = sb->center;
-
-                    vec2 norm = get_facing_normal(pa, pb, ref_point, flip);
-                    decal->normal = vec3(norm.x, 0, norm.y);
+                        decal->normal = ((floor_region) ? 
+                            wall->normal_front() : wall->normal_back());
+                        break;
+                    }
+                    decal->normal = wall->normal_front();
                 }
                 break;
 

@@ -20,9 +20,11 @@ namespace Geez
     {
     private:
         std::unordered_map<InstanceID, std::unique_ptr<GameObject>> m_game_objects;
+        size_t m_physics_object = 0;
         
     public:
         void attach_physics_component(const InstanceID& id);
+        // detach_physics_component() << TODO
 
         /**
          * @brief Creates a new basic GameObject instance
@@ -68,6 +70,14 @@ namespace Geez
          * @return Pointer to the GameObject if found, nullptr otherwise
          */
         GameObject* get(const InstanceID& id);
+
+        inline size_t count() const {
+            return m_game_objects.size();
+        }
+
+        inline size_t physics_count() const {
+            return m_physics_object;
+        }
 
         // ===== Iterator API (yields GameObject*) =====
         class Iterator

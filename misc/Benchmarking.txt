@@ -1,0 +1,35 @@
+Wall normals caching
+
+given:
+    - Intel(R) UHD Graphics :<
+    - OpenGL 3.30
+
+    - release build
+    - 2000 physics object (including player)
+    - 2 non-physics object
+    - 1 GUI render
+    - 1 decal
+    - 1 wall raycast
+    - 16 walls (3 portals, 13 default walls)
+    - 4 sectors
+    - no holes
+    - no debug draws
+
+Function ... Time(SECONDS)
+numbers shown are average
+
+>> Before (re-calculating normals per frame (yes I know bad))
+    >> FPS               - 30
+    >> Update            - 0.000016s (0.016 ms)
+    >> Physics_Update    - 0.004500s (4.5   ms)
+    >> Render            - 0.025300s (25.3  ms)
+
+    Note:
+        Collision sometimes just not work XD, the player can fall off the map
+        (This is a small map BTW, since I don't have a map editor yet smh)
+
+>> After (on map geometry load / reload)
+    >> FPS               - 
+    >> Update            - 
+    >> Physics_Update    - 
+    >> Render            - 

@@ -2,3 +2,8 @@ out/build
 *.exe
 *.obj
 .vscode
+
+geez.ini
+imgui.ini
+out/bin/geez.ini
+out/bin/imgui.ini

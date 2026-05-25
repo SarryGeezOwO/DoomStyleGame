@@ -13,6 +13,7 @@ void Geez::GameObjectManager::attach_physics_component(const InstanceID &id)
         obj->physics->step_height       = 0.0f;
         obj->physics->mass              = 1.0f;
         obj->physics->friction          = 0.1f;
+        m_physics_object++;
     }
     else {
         GZ_LOG(GZ_FAIL, "Cannot attach physics component to nullptr GameObject");

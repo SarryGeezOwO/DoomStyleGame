@@ -63,6 +63,8 @@ static PhysicsSystem physics{};
 vec3 light_pos = vec3(0, 1, 0);
 U32 sample_decal = 0;
 std::string update_time = "";
+std::string physics_update_time = "";
+std::string render_time = "";
 
 // =========================================//
 
@@ -222,28 +224,24 @@ void start()
 }
 
 void logic_map_change() {
-    if (input.check_key(SDLK_1, GZ_TAP)) {
+    bool changed = false;
+    if ((changed = input.check_key(SDLK_1, GZ_TAP))) {
         current_map = "sample";
-        vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
-        player->position = vec3(c.x, 0.1f, c.y);
     }
-    else if (input.check_key(SDLK_2, GZ_TAP)) {
+    else if ((changed = input.check_key(SDLK_2, GZ_TAP))) {
         current_map = "centerHole";
-        vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
-        player->position = vec3(c.x, 0.3f, c.y);
     }
-    else if (input.check_key(SDLK_3, GZ_TAP)) {
+    else if ((changed = input.check_key(SDLK_3, GZ_TAP))) {
         current_map = "stairs";
-        vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
-        player->position = vec3(c.x, 0.1f, c.y);
     }
-    else if (input.check_key(SDLK_4, GZ_TAP)) {
+    else if ((changed = input.check_key(SDLK_4, GZ_TAP))) {
         current_map = "hole_in_hole";
-        vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
-        player->position = vec3(c.x, 0.1f, c.y);
     }
-    else if (input.check_key(SDLK_5, GZ_TAP)) {
+    else if ((changed = input.check_key(SDLK_5, GZ_TAP))) {
         current_map = "map_editor";
+    }
+
+    if (changed) {
         vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
         player->position = vec3(c.x, 0.1f, c.y);
     }
@@ -282,8 +280,6 @@ void logic_character_controller(GeezMapData* map) {
 
 void update()
 {   
-    RaiiTimer<SECONDS> rt(&update_time);
-
     // Change Map
     logic_map_change();
     GeezMapData* map_data = resource->get<GeezMapData>(current_map);
@@ -297,17 +293,18 @@ void update()
     logic_character_controller(map_data);
 
     // Spawn physics balls in front of camera
+    static int balls = 0;
     if (
-        input.check_mouse_left(GZ_TAP) && 
+        input.check_mouse_left(GZ_HOLD) && 
         !window->is_cursor_shown() &&
         !input.check_key(SDLK_LSHIFT, GZ_HOLD)
     ) {
-        GameObject* ball = nullptr;
-        if ((ball = entities->get("Ball"))) {
-            entities->destroy("Ball");
-        }
+        // GameObject* ball = nullptr;
+        // if ((ball = entities->get("Ball"))) {
+        //     entities->destroy("Ball");
+        // }
 
-        ball = entities->create("Ball");
+        GameObject* ball = entities->create("Ball" + std::to_string(balls++));
         if (ball){
             entities->attach_physics_component(ball->id());
             ball->position = camera.position + (camera.axis_forward() * 0.1f);
@@ -382,7 +379,11 @@ void post_update() {
     ImGui::Text("Active Mixer Channel: %d", AudioPlayer::Internal::get_active_mixer_channel_count(*audio.get()));
     ImGui::Text("SDL Stencil:  %d", stencil_size);
     ImGui::Text("OGL Stencil:  %d", stencilBits);
-    ImGui::Text("Update Time:  %s", update_time.c_str());
+    ImGui::Text("Update Time:        %s", update_time.c_str());
+    ImGui::Text("PhysicsUpdate Time: %s", physics_update_time.c_str());
+    ImGui::Text("Render Time:        %s", render_time.c_str());
+    ImGui::Text("GameObject count:           %lld", entities->count());
+    ImGui::Text("GameObject (Physics) count: %lld", entities->physics_count());
     ImGui::NewLine(); ImGui::SeparatorText("config"); ImGui::NewLine();
     ImGui::Text("Sensitivity %.2f", cam_sensitivity);
     ImGui::End();
@@ -468,11 +469,20 @@ int main()
         ImGui::NewFrame();
 
         camera.update();
-        update();
-        physics.update(*entities, *resource->get<GeezMapData>(current_map), delta_time);
+        {
+            RaiiTimer<SECONDS> rt(&update_time);
+            update();
+        }
+        {
+            RaiiTimer<SECONDS> rt(&physics_update_time);
+            physics.update(*entities, *resource->get<GeezMapData>(current_map), delta_time);
+        }
         post_update();
-        render();
-        renderer->display_frame();
+        {
+            RaiiTimer<SECONDS> rt(&render_time);
+            render();
+            renderer->display_frame();
+        }
         
         // runtime FPS Calculation
         frame_tick++;

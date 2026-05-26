@@ -63,12 +63,11 @@ namespace Geez
         RenderDataWall_t() { type = R_WALL; }
 
         U32 id;
-        glm::vec2 a; 
+        glm::vec2 a;
         glm::vec2 b;
-        glm::vec2 ref_center; 
+        glm::vec3 normal; 
         F32 yBottom; 
         F32 yTop;
-        bool flipped;
 
         #ifdef GZ_BUILD_DEBUG
             bool debug_is_floor;

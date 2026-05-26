@@ -308,7 +308,7 @@ namespace Geez {
             });
         } 
         else if (sa) ref_point.push_back({sa->center, false});
-        else if (sb) ref_point.push_back({sa->center, false});
+        else if (sb) ref_point.push_back({sb->center, false});
 
         for (size_t i = 0; i < ref_point.size(); i++) {
             vec2 norm = get_facing_normal(pa, pb, ref_point[i].first, ref_point[i].second);
@@ -321,6 +321,46 @@ namespace Geez {
         for (wall_t& wall : walls) {
             update_wall_normal(wall);
         }
+    }
+
+    void GeezMapData::update_sectors()
+    {
+        while (!m_update_queue.empty()) {
+            U32 sid = m_update_queue.front();
+            m_update_queue.pop();
+
+            sector_t* s = get_sector(sid);
+            if (!s) return;
+            
+            for (U32 wid : s->walls) {
+                wall_t* w = get_wall(wid);
+                if (w) update_wall_normal(*w);
+            }
+        }
+    }
+
+    void GeezMapData::set_sector_floor(sector_t &sector, F32 new_floor, bool additive)
+    {
+        sector.floor_height = (new_floor + (sector.floor_height * additive));
+        m_update_queue.push(sector.id);
+    }
+
+    void GeezMapData::set_sector_floor(U32 id, F32 new_floor, bool additive)
+    {
+        sector_t* s = get_sector(id);
+        if (s) set_sector_floor(*s, new_floor, additive);
+    }
+
+    void GeezMapData::set_sector_ceil(sector_t &sector, F32 new_ceil, bool additive)
+    {
+        sector.ceil_height = (new_ceil + (sector.ceil_height * additive));
+        m_update_queue.push(sector.id);
+    }
+
+    void GeezMapData::set_sector_ceil(U32 id, F32 new_ceil, bool additive)
+    {
+        sector_t* s = get_sector(id);
+        if (s) set_sector_ceil(*s, new_ceil, additive);
     }
 
     U32 GeezMapData::make_decal(vec3 pos, vec2 size, ResourceID texture_id, decal_t::target_t target, U32 target_id)

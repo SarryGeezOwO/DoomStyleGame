@@ -321,12 +321,14 @@ void update()
         // Moving a floor will not move it's height
         if (map_data->get_sector(1) != nullptr && input.check_key(SDLK_LSHIFT, GZ_HOLD)) {       
             F32 add = 0.5f;
-            map_data->get_sector(1)->floor_height += (
+            
+            map_data->set_sector_floor(1, ((
                 (input.check_mouse_left(GZ_HOLD) - input.check_mouse_right(GZ_HOLD)) * add
-            ) * delta_time;
-            map_data->get_sector(1)->ceil_height += (
+            ) * delta_time), true);
+
+            map_data->set_sector_ceil(1, ((
                 (input.check_mouse_left(GZ_HOLD) - input.check_mouse_right(GZ_HOLD)) * add
-            ) * delta_time;
+            ) * delta_time), true);
         }
 
         // Raycasting (Super slow !!!)cls
@@ -362,6 +364,9 @@ void update()
 }
 
 void post_update() {
+    GeezMapData* map_data = resource->get<GeezMapData>(current_map);
+    map_data->update_sectors();
+
     camera.position = player->position + vec3(0, (player->physics->height * 0.5f), 0);
     I32 stencil_size;
     SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &stencil_size);
@@ -385,7 +390,7 @@ void post_update() {
     ImGui::Text("GameObject count:           %lld", entities->count());
     ImGui::Text("GameObject (Physics) count: %lld", entities->physics_count());
     ImGui::NewLine(); ImGui::SeparatorText("config"); ImGui::NewLine();
-    ImGui::Text("Sensitivity %.2f", cam_sensitivity);
+    ImGui::Text("Sensitivity %.4f", cam_sensitivity);
     ImGui::End();
 }
 

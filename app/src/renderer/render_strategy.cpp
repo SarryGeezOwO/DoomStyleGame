@@ -52,20 +52,14 @@ void Geez::RenderStrategyWall::execute(IRenderData &data, const RenderContext &c
 
     Mesh* mesh = context.meshes->get("QUAD");
     vec2 v = wall.b - wall.a;
-    vec2 dir  = normalize(v);
     vec2 mid  = wall.a + (v * 0.5f);
-    vec2 norm = vec2(-dir.y, dir.x) * (wall.flipped ? -1.0f : 1.0f);
-    vec2 to_center = normalize(wall.ref_center - mid);
-
     F32 mag    = abs(length(v));
-    F32 angle  = SDL_atan2f(dir.y, dir.x);
-    F32 facing = dot(norm, to_center);
     F32 height = abs(wall.yBottom - wall.yTop);
 
     mesh->bind();
     mat4 model =  mat4(1.0f);
          model =  translate(model, vec3(mid.x, wall.yBottom + (height * 0.5f), mid.y));
-         model =  rotate(model, -angle, vec3(0,1,0));
+         model *= make_rotation_from_direction(wall.normal);
          model =  scale(model, vec3(mag, height, 1.0f));
 
     bind(
@@ -73,7 +67,7 @@ void Geez::RenderStrategyWall::execute(IRenderData &data, const RenderContext &c
         model,
         wall.shader_id, 
         wall.texture_ids[0], 
-        (facing < 0.0f),
+        false,
         true,
         vec2(1.5)
     );
@@ -82,9 +76,8 @@ void Geez::RenderStrategyWall::execute(IRenderData &data, const RenderContext &c
 
     #ifdef GZ_BUILD_DEBUG
         const vec3 line_center = vec3(mid.x, wall.yBottom + (height*0.5f), mid.y);
-        const vec3 line_dir = vec3(dir.y * -sign(facing), 0, dir.x * sign(facing));
         const Color3f color = Color3f(wall.debug_is_ceil, 0, wall.debug_is_floor);
-        GZ_DEBUG_DRAW_RAY(context, line_center, line_dir, 0.075f, 3, color);
+        GZ_DEBUG_DRAW_RAY(context, line_center, wall.normal, 0.075f, 3, color);
     #endif
 }
 
@@ -237,6 +230,12 @@ void Geez::RenderStrategyDecalWall::execute(IRenderDecalData &data, const Render
 
     GL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr)); // Magic 6
     context.meshes->unbind();
+
+    #ifdef GZ_BUILD_DEBUG
+        GL(glDisable(GL_STENCIL_TEST));
+        GZ_DEBUG_DRAW_RAY(context, decal.position, decal.normal, 0.075f, 5, Color3f(0, 1, 0));
+        GL(glEnable(GL_STENCIL_TEST));
+    #endif
 }
 
 void Geez::RenderStrategyDecalSector::execute(IRenderDecalData &data, const RenderContext &context)

@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <unordered_map>
 #include <string>
+#include <queue>
 
 namespace Geez
 {
@@ -17,8 +18,8 @@ namespace Geez
         std::unordered_map<U32, std::string> texture_references;
         std::unordered_map<U32, std::shared_ptr<sector_mesh_t>> sector_meshes; // Sector_id
 
-        void update_wall_normal(wall_t& wall);
-        void update_all_wall_normal();
+        // Sectors that needs updating, will trigger at main's post_update()
+        std::queue<U32> m_update_queue;
 
     public:
         GeezMapData(const std::string& file);
@@ -26,6 +27,15 @@ namespace Geez
 
         void make_mesh();
         bool is_sector_scary(U32 sector_id, U32 wall_id);
+
+        void update_sectors();
+        void update_wall_normal(wall_t& wall);
+        void update_all_wall_normal();
+
+        void set_sector_floor(sector_t& sector, F32 new_floor, bool additive = false);
+        void set_sector_floor(U32 id, F32 new_floor, bool additive = false);
+        void set_sector_ceil(sector_t& sector, F32 new_ceil, bool additive = false);
+        void set_sector_ceil(U32 id, F32 new_ceil, bool additive = false);
 
         U32 make_decal(glm::vec3 pos, glm::vec2 size, ResourceID texture_id, decal_t::target_t target, U32 target_id);
         void update_decal(decal_t* decal, glm::vec3 new_pos, decal_t::target_t target, U32 target_id);

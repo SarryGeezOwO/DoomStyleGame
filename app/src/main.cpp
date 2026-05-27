@@ -163,7 +163,7 @@ void init() {
     input.AddMouseMoveCallback(on_mouse_move);
     input.AddWindowResizeCallback(on_resize);
     resource->load_all();
-    resource->set_watch_interval(3000);
+    resource->set_watch_interval(500);
     resource->start_watching();
 
     camera.perspective();
@@ -344,7 +344,7 @@ void update()
                 sample_decal = map_data->make_decal(
                     hitpoint, 
                     vec2(1, 1), 
-                    "DefaultTexture", 
+                    "blood_splat", 
                     decal_t::WALL, 
                     hit_wall->id
                 );
@@ -402,6 +402,7 @@ void render()
         light_shader->bind();
         light_shader->
          set_uniform<F32>("u_normalFlip", 1.0)
+        .set_uniform<F32>("u_time", game_time)
         .set_uniform<vec3>("u_view_pos", camera.position)
         .set_uniform<vec3>("u_light.position", light_pos)
         .set_uniform<vec3>("u_light.ambient",  vec3(0.3f))

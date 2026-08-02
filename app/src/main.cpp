@@ -371,7 +371,12 @@ void post_update() {
     I32 stencil_size;
     SDL_GL_GetAttribute(SDL_GL_STENCIL_SIZE, &stencil_size);
     I32 stencilBits = 0;
-    glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
+    GL(glGetFramebufferAttachmentParameteriv(
+        GL_FRAMEBUFFER, 
+        GL_STENCIL, 
+        GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE, 
+        &stencilBits
+    ));
 
     ImGui::Begin("Testing");
     ImGui::SeparatorText("exposed engine"); ImGui::NewLine();

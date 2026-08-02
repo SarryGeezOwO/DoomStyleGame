@@ -38,9 +38,11 @@ const float bayerMatrix8x8[64] = float[64](
 
 vec3 dither(vec2 uv, vec3 color, int colorNum) {
 
-    float offset = floor(sin(u_time * 1.5) * 2);
-    int x = int(uv.x * resolution.x + offset) % 8;
-    int y = int(uv.y * resolution.y) % 8;
+    float ss = 0.25;
+    float sh = 1;
+    float offset = floor(u_time / ss) * sh;
+    int x = int(uv.x * resolution.x) % 8;
+    int y = int(uv.y * resolution.y + offset) % 8;
     float threshold = bayerMatrix8x8[y * 8 + x] - 0.88;
 
     color.rgb += threshold;

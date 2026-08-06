@@ -33,14 +33,15 @@ such as floor height and ceil height.
 
 ## Rendering
 - Rendering a map primarily uses simple geometries like quads and planes with map partitioning to cull draw calls. Each sector draws.
-  it's walls then floor and ceiling before proceeding to the next sector. 
+  it's walls then floor and ceiling before proceeding to the next sector.
 - entities are rendered as a billboards (quads that rotate yaw-wise to look directly in the camera).
+  Entities are drawn last after all drawable sectors are done.
 
 <br>
 
 ### Old Rendering preview
 this preview showcases how the map is rendered in order, although the footage is an outdated view
-it is still somewhat similar. Entities or Billboards are not shown in this preview.
+it is still somewhat similar.
 
 https://github.com/user-attachments/assets/011f149e-93de-4348-b146-a97ea59c5bea
 

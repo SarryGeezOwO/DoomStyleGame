@@ -32,6 +32,7 @@ Don't judge me pls 💔💔💔
 #include "core/game_object.hpp"
 #include "core/game_object_manager.hpp"
 #include "core/mesh.hpp"
+#include "core/tag.hpp"
 #include "core/mesh_manager.hpp"
 
 // Physics

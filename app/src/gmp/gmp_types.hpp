@@ -1,6 +1,7 @@
 #ifndef GZ_GMP_TYPES_HPP
 #define GZ_GMP_TYPES_HPP
 
+#include "core/tag.hpp"
 #include "util/common_types.hpp"
 #include "resource/resource.hpp"
 #include "renderer/vertex_array.hpp"
@@ -17,7 +18,7 @@ namespace Geez
     using Polygon_t = std::vector<Point_t>;
     // Haha, batman, you cannnot stop me from writing bad code 🗿🗿
 
-    struct decal_t {
+    struct decal_t : ITagClient {
         U32 id;
         glm::vec3 position;
         glm::vec3 normal;
@@ -32,13 +33,14 @@ namespace Geez
         U32 target_id;
     };
 
-    struct wall_t {
+    struct wall_t : ITagClient {
         U32 id;
         Point_t point_a;
         Point_t point_b;
         bool is_portal;
         ResourceID texture_id = "Wall";
         std::array<I32, 2> connected_sectors = {-1, -1}; // Ids of SectorA, SectorB
+        U16 tagList = 0;
 
         // The Floor region normal if is_portal is true,
         // this also returns the solid wall normal if is_portal is false
@@ -59,7 +61,7 @@ namespace Geez
         std::array<glm::vec3, 2> m_normal = {};
     };
 
-    struct sector_t {
+    struct sector_t : ITagClient {
         U32 id;
         F32 floor_height;                           // Floor...
         F32 ceil_height;                            // Not relative to the floor_height

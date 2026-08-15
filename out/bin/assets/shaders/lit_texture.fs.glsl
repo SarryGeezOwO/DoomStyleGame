@@ -92,6 +92,6 @@ void main() {
     vec3 specular = u_light.specular * spec;
 
     vec3 lighting = (ambient + diffuse + specular);
-    o_color.rgb = dither(uv, texColor.rgb, 8) * 0.06;
-    o_color += vec4(lighting, alpha);
+    o_color = vec4(lighting, alpha);
+    o_color.rgb += dither(uv, texColor.rgb, 8) * 0.06;
 }

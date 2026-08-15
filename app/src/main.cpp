@@ -54,6 +54,7 @@ static std::unique_ptr<ResourceManager> resource;
 static std::unique_ptr<GameObjectManager> entities;
 static std::unique_ptr<MeshManager> meshes;
 static std::unique_ptr<Renderer> renderer;
+static std::unique_ptr<TagResolver> tags;
 static Camera camera(WORLD_UP);
 static Input input{};
 static PhysicsSystem physics{};
@@ -145,6 +146,7 @@ void init() {
     audio     = std::make_unique<AudioPlayer>(MAX_MIXER_CHANNEL);
     entities  = std::make_unique<GameObjectManager>();
     resource  = std::make_unique<ResourceManager>();
+    tags      = std::make_unique<TagResolver>();
     meshes    = std::make_unique<MeshManager>(
         std::vector<Internal::PrimitveMesh>{
             Internal::QUAD,
@@ -188,6 +190,7 @@ void onQuit()
     window.reset();
     audio.reset();
     config.reset();
+    tags.reset();
 
     GZ_Audio_Quit();
     SDL_Quit();
@@ -221,6 +224,10 @@ void start()
     auto shu = entities->create("Shu_Arknights", unlit_shader_name, "ShuAK");
     shu->scale = vec3(0.5f, 0.5f, 1.0f);
     shu->position = vec3(c.x, 0.25f, c.y);
+
+    if (map_data->get_sector(1) != nullptr) {
+        map_data->get_sector(1)->tag_id = 69;
+    }
 }
 
 void logic_map_change() {
@@ -349,6 +356,16 @@ void update()
                     hit_wall->id
                 );
                 decal = map_data->get_decal(sample_decal);
+                decal->tag_id = 67;
+
+                // Attempt to create a connection between 67 and 69;
+                tags->addTagConnection(67, 69, [](void const *a, ITagClient const *b, U8 from) -> void {
+                    if (from == 1) {
+                        // Modify Sector1 floor height
+
+                    }
+                    return;
+                });
             }
 
             // Update
@@ -489,6 +506,7 @@ int main()
             physics.update(*entities, *resource->get<GeezMapData>(current_map), delta_time);
         }
         post_update();
+        tags->resolve_all_tag();
         {
             RaiiTimer<SECONDS> rt(&render_time);
             render();

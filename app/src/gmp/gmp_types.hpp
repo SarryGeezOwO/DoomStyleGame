@@ -1,7 +1,6 @@
 #ifndef GZ_GMP_TYPES_HPP
 #define GZ_GMP_TYPES_HPP
 
-#include "core/tag.hpp"
 #include "util/common_types.hpp"
 #include "resource/resource.hpp"
 #include "renderer/vertex_array.hpp"
@@ -14,6 +13,19 @@
 
 namespace Geez
 {
+    #define GZ_TAG_CB_SOURCE_NONE 0
+    #define GZ_TAG_CB_SOURCE_A 1
+    #define GZ_TAG_CB_SOURCE_B 2
+    #define GZ_TAG_CB_SOURCE_BOTH 3
+
+    #define GZ_GMP_TYPE_FLAG_INTERACTABLE = 0x0001 
+
+    struct ITagClient {
+        UPTR ptr            = reinterpret_cast<UPTR>(this);
+        U32  tag_id         = 0;
+        bool tag_isModified = 0; // a callback is expected and will reset to false after action
+    };
+
     using Point_t = std::array<F32, 2>;
     using Polygon_t = std::vector<Point_t>;
     // Haha, batman, you cannnot stop me from writing bad code 🗿🗿
@@ -24,6 +36,7 @@ namespace Geez
         glm::vec3 normal;
         glm::vec2 size;
         ResourceID texture_id;
+        U16 flags = 0;
 
         enum target_t {
             WALL, FLOOR, CEIL
@@ -40,7 +53,6 @@ namespace Geez
         bool is_portal;
         ResourceID texture_id = "Wall";
         std::array<I32, 2> connected_sectors = {-1, -1}; // Ids of SectorA, SectorB
-        U16 tagList = 0;
 
         // The Floor region normal if is_portal is true,
         // this also returns the solid wall normal if is_portal is false

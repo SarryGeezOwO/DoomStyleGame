@@ -6,9 +6,57 @@
 #include <unordered_map>
 #include <string>
 #include <queue>
+#include <functional>
 
 namespace Geez
 {
+    // TagA, TagB, from (0=none 1=A 2=B 3=Both)
+    using TagCallback = std::function<void(UPTR, UPTR, U8)>;
+
+    struct TagResolver {
+
+        // A connection is where any of the participating members action
+        // will trigger a callback
+        struct TagConnection {
+            U32 a;
+            U32 b;
+            TagCallback cb;
+        };
+
+    private:
+        std::unordered_map<U32, ITagClient const*> tag_map;
+        std::vector<TagConnection> connections;
+        
+    public:
+
+        TagResolver();
+        ~TagResolver();
+
+        inline void addTagClient(ITagClient const *client) {
+            tag_map[client->tag_id] = client;
+            GZ_LOG(GZ_DEBUG, "Tag Client added %d", client->tag_id);
+        }
+
+        inline void addTagConnection(U32 id_a, U32 id_b, TagCallback callback) {
+            connections.push_back({id_a, id_b, callback});
+            GZ_LOG(GZ_DEBUG, "Tag Connection between %d and %d added", id_a, id_b);
+        }
+        
+        template <typename T>
+        T const* base_object(U32 tag_id) {
+            if (tag_map.find(tag_id) == tag_map.end()) {
+                GZ_LOG(GZ_FAIL, "Tag ID [%d] not found...", tag_id);
+                return nullptr;
+            }
+            return reinterpret_cast<T const*>(tag_map.at(tag_id));            
+        }
+        
+        void resolve_tag(U32 tag_id);
+        void resolve_all_tag();
+    };
+
+
+
     struct GeezMapData : IResource 
     {
     private:
@@ -69,6 +117,10 @@ namespace Geez
         inline const std::vector<wall_t>    get_walls()   const { return walls;   }
         inline const std::vector<sector_t>  get_sectors() const { return sectors; }
         inline const std::vector<decal_t>   get_decals()  const { return decals;  }
+
+        struct Event {
+            static void interact_decal(ITagClient *ptr);
+        };
     };
 }
 

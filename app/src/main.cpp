@@ -227,6 +227,7 @@ void start()
 
     if (map_data->get_sector(1) != nullptr) {
         map_data->get_sector(1)->tag_id = 69;
+        tags->addTagClient(map_data->get_sector(1));
     }
 }
 
@@ -322,6 +323,10 @@ void update()
         }
     }
 
+    if (input.check_key(SDLK_H, GZ_TAP)) {
+        GeezMapData::Event::interact_decal(map_data->get_decal(sample_decal));
+    }
+
     {   // ============= TEMP ============= //
         // Example of moving a sector by floor height
         // Left mouse means a positive addition
@@ -357,14 +362,27 @@ void update()
                 );
                 decal = map_data->get_decal(sample_decal);
                 decal->tag_id = 67;
+                tags->addTagClient(decal);
 
                 // Attempt to create a connection between 67 and 69;
-                tags->addTagConnection(67, 69, [](void const *a, ITagClient const *b, U8 from) -> void {
+                tags->addTagConnection(67, 69, [](UPTR aptr, UPTR bptr, U8 from) -> void {
                     if (from == 1) {
                         // Modify Sector1 floor height
+                        decal_t  *a = reinterpret_cast<decal_t*>(aptr);
+                        sector_t *b = reinterpret_cast<sector_t*>(bptr);
 
+                        if (from == GZ_TAG_CB_SOURCE_A) {
+                            if (b->floor_height <= b->ceil_height) {
+                                b->floor_height += 0.01f;
+                            }
+                            else {
+                                // Stop operation
+                                a->tag_isModified = false;
+                            }
+                        }
+
+                        b->tag_isModified = false;
                     }
-                    return;
                 });
             }
 

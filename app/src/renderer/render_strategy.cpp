@@ -14,7 +14,7 @@ using namespace glm;
 namespace Geez
 {
     // Errmm, my mind is currently fried...
-    static void bind(const RenderContext &context, const mat4& model,
+    static void gz_bind(const RenderContext &context, const mat4& model,
         const ResourceID& shader_id, const ResourceID& texture_id, 
         bool isFliped, bool use_uv_world, const vec2& uv_scale = vec2(1))
     {
@@ -62,7 +62,7 @@ void Geez::RenderStrategyWall::execute(IRenderData &data, const RenderContext &c
          model *= make_rotation_from_direction(wall.normal);
          model =  scale(model, vec3(mag, height, 1.0f));
 
-    bind(
+    gz_bind(
         context, 
         model,
         wall.shader_id, 
@@ -102,7 +102,7 @@ void Geez::RenderStrategySector::execute(IRenderData &data, const RenderContext 
     flor_model = translate(flor_model, vec3(0, sector.floor, 0));
     const vec2 uv_scale(1.5);
 
-    bind(
+    gz_bind(
         context, 
         flor_model,
         sector.shader_id, 
@@ -116,7 +116,7 @@ void Geez::RenderStrategySector::execute(IRenderData &data, const RenderContext 
     // Ceil Mesh
     mat4 ceil_model = mat4(1.0f);
     ceil_model = translate(ceil_model, vec3(0, sector.ceil, 0));
-    bind(
+    gz_bind(
         context, 
         ceil_model, 
         sector.shader_id, 
@@ -157,7 +157,7 @@ void Geez::RenderStrategyGameobject::execute(IRenderData &data, const RenderCont
         model =  scale(model, object.scale);
 
     mesh->bind();
-    bind(
+    gz_bind(
         context,
         model,
         object.shader_id,
@@ -184,7 +184,7 @@ void Geez::RenderStrategyGUI::execute(IRenderData &data, const RenderContext &co
         model =  scale(model, vec3(gui.size.x, gui.size.y, 1));
 
     mesh->bind();
-    bind(
+    gz_bind(
         context,
         model,
         gui.shader_id,
@@ -219,7 +219,7 @@ void Geez::RenderStrategyDecalWall::execute(IRenderDecalData &data, const Render
         model  = scale(model, vec3(decal.size.x, decal.size.y, 1.0f));
 
     mesh->bind();
-    bind(
+    gz_bind(
         context,
         model,
         decal.shader_id,
@@ -253,7 +253,7 @@ void Geez::RenderStrategyDecalSector::execute(IRenderDecalData &data, const Rend
         model  = scale(model, vec3(decal.size.x, decal.size.y, 1.0f));
 
     mesh->bind();
-    bind(
+    gz_bind(
         context,
         model,
         decal.shader_id,

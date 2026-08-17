@@ -93,5 +93,7 @@ void main() {
 
     vec3 lighting = (ambient + diffuse + specular);
     o_color = vec4(lighting, alpha);
-    o_color.rgb += dither(uv, texColor.rgb, 8) * 0.06;
+
+    float dither_scale = 2.0;
+    o_color.rgb += dither(uv / dither_scale, texColor.rgb, 8) * 0.075;
 }

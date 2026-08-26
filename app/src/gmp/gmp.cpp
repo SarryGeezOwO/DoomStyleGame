@@ -16,7 +16,6 @@ using namespace glm;
 namespace Geez {
     TagResolver::TagResolver()
     {
-        GZ_LOG(GZ_DEBUG, "This shit is resolved very real");
     }
 
     TagResolver::~TagResolver()
@@ -31,8 +30,8 @@ namespace Geez {
     void TagResolver::resolve_all_tag()
     {
         for (TagConnection& conn : connections) {
-            ITagClient const *a = tag_map[conn.a];
-            ITagClient const *b = tag_map[conn.b];
+            ITagClient* a = tag_map[conn.a];
+            ITagClient* b = tag_map[conn.b];
             // if A and B triggers a callback on the same frame
             // one callback only gets triggered in response
             
@@ -74,6 +73,7 @@ namespace Geez {
 
     GeezMapData::GeezMapData(const std::string &file)
     {
+        tag_resolver = std::make_unique<TagResolver>();
         static const std::unordered_map<std::string, GroupType> groupTypeMap = {
             { "--END--",        NONE        },
             { "[TEXTURE]",      TEXTURE_REF },
@@ -125,35 +125,39 @@ namespace Geez {
             }
             else if (type == WALL) 
             {
-                // Expected 5 values
-                // Wall_id, PointA, PointB, TextureID, IsPortal
+                // Expected 6 values
+                // Wall_id, Tag_id, PointA, PointB, TextureID, IsPortal
                 wall_t wall;
                 wall.id         = id;
-                wall.point_a    = points[static_cast<U32>(values[1])];
-                wall.point_b    = points[static_cast<U32>(values[2])];
-                wall.texture_id = texture_references[static_cast<U32>(values[3])];
-                wall.is_portal  = static_cast<bool>(values[4]);
+                wall.tag_id     = values[1];
+                wall.point_a    = points[static_cast<U32>(values[2])];
+                wall.point_b    = points[static_cast<U32>(values[3])];
+                wall.texture_id = texture_references[static_cast<U32>(values[4])];
+                wall.is_portal  = static_cast<bool>(values[5]);
                 walls.push_back(std::move(wall));
+                tag_resolver->addTagClient(wall);
             }
             else if (type == SECTOR) 
             {
-                // Expect 7 + wall_count
-                // Sector_ID, wall_count, Floor, Ceil, isHole, TextureID(floor), TextureID(ceil), {wall_ids}
+                // Expect 8 + wall_count
+                // Sector_ID, Tag_id, wall_count, Floor, Ceil, isHole, TextureID(floor), TextureID(ceil), {wall_ids}
 
-                U32 wall_count = static_cast<U32>(values[1]);
+                U32 wall_count = static_cast<U32>(values[2]);
                 sector_t sector;
                 sector.id               = id;
-                sector.floor_height     = values[2];
-                sector.ceil_height      = values[3];
-                sector.is_interior          = static_cast<bool>(values[4]);
-                sector.texture_id_floor = texture_references[static_cast<U32>(values[5])];
-                sector.texture_id_ceil  = texture_references[static_cast<U32>(values[6])];
+                sector.tag_id           = values[1];
+                sector.floor_height     = values[3];
+                sector.ceil_height      = values[4];
+                sector.is_interior          = static_cast<bool>(values[5]);
+                sector.texture_id_floor = texture_references[static_cast<U32>(values[6])];
+                sector.texture_id_ceil  = texture_references[static_cast<U32>(values[7])];
 
                 for (U32 i = 0; i < wall_count; i++){
-                    U32 wall_id = static_cast<U32>(values[i+7]);
+                    U32 wall_id = static_cast<U32>(values[i+8]);
                     sector.walls.push_back(wall_id);
                 }
                 sectors.push_back(sector);
+                tag_resolver->addTagClient(sector);
             }
             else if (type == HOLE) {
                 // Expect 2 + wall_count
@@ -233,6 +237,7 @@ namespace Geez {
         walls.clear();
         sectors.clear();
         decals.clear();
+        tag_resolver.reset();
         GZ_LOG(GZ_SUCCESS, "GeezMap [%s] Destroyed", m_resource_id.c_str());
     }
 
@@ -400,9 +405,10 @@ namespace Geez {
         if (s) set_sector_ceil(*s, new_ceil, additive);
     }
 
-    U32 GeezMapData::make_decal(vec3 pos, vec2 size, ResourceID texture_id, decal_t::target_t target, U32 target_id)
+    U32 GeezMapData::make_decal(vec3 pos, vec2 size, ResourceID texture_id, decal_t::target_t target, U32 target_id, U32 tag_id)
     {
         decal_t d{};
+        d.tag_id        = tag_id;
         d.id            = decal_id_ref++;
         d.size          = size;
         d.texture_id    = texture_id;
@@ -630,7 +636,7 @@ namespace Geez {
 
 
     
-    void GeezMapData::Event::interact_decal(ITagClient *ptr)
+    void GeezMapData::Event::interact_decal(ITagClient* ptr)
     {
         if (ptr) ptr->tag_isModified = true;
     }

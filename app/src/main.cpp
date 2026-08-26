@@ -54,7 +54,6 @@ static std::unique_ptr<ResourceManager> resource;
 static std::unique_ptr<GameObjectManager> entities;
 static std::unique_ptr<MeshManager> meshes;
 static std::unique_ptr<Renderer> renderer;
-static std::unique_ptr<TagResolver> tags;
 static Camera camera(WORLD_UP);
 static Input input{};
 static PhysicsSystem physics{};
@@ -146,7 +145,6 @@ void init() {
     audio     = std::make_unique<AudioPlayer>(MAX_MIXER_CHANNEL);
     entities  = std::make_unique<GameObjectManager>();
     resource  = std::make_unique<ResourceManager>();
-    tags      = std::make_unique<TagResolver>();
     meshes    = std::make_unique<MeshManager>(
         std::vector<Internal::PrimitveMesh>{
             Internal::QUAD,
@@ -190,7 +188,6 @@ void onQuit()
     window.reset();
     audio.reset();
     config.reset();
-    tags.reset();
 
     GZ_Audio_Quit();
     SDL_Quit();
@@ -224,11 +221,10 @@ void start()
     auto shu = entities->create("Shu_Arknights", unlit_shader_name, "ShuAK");
     shu->scale = vec3(0.5f, 0.5f, 1.0f);
     shu->position = vec3(c.x, 0.25f, c.y);
+}
 
-    if (map_data->get_sector(1) != nullptr) {
-        map_data->get_sector(1)->tag_id = 69;
-        tags->addTagClient(map_data->get_sector(1));
-    }
+void on_map_change(GeezMapData& new_map) {
+
 }
 
 void logic_map_change() {
@@ -253,6 +249,7 @@ void logic_map_change() {
         vec2 c = resource->get<GeezMapData>(current_map)->get_sector(0)->center;
         player->position = vec3(c.x, 0.1f, c.y);
     }
+    on_map_change(*(resource->get<GeezMapData>(current_map)));
 }
 
 void logic_character_controller(GeezMapData* map) {
@@ -327,6 +324,20 @@ void update()
         GeezMapData::Event::interact_decal(map_data->get_decal(sample_decal));
     }
 
+    if (input.check_key(SDLK_J, GZ_TAP)) {
+        GZ_LOG(GZ_DEBUG, "==========    TAGS     ==========");
+        for (const auto& id : map_data->tag_resolver->get_tags())
+            GZ_LOG(GZ_DEBUG, "Tag ID [%d]", id);
+        GZ_LOG(GZ_DEBUG, "=================================\n");
+    }
+
+    if (input.check_key(SDLK_K, GZ_TAP)) {
+        GZ_LOG(GZ_DEBUG, "========== CONNECTIONS ==========");
+        for (const auto& conn : map_data->tag_resolver->get_connections())
+            GZ_LOG(GZ_DEBUG, "A[%d] <--> B[%d]", conn.a, conn.b);
+        GZ_LOG(GZ_DEBUG, "=================================\n");
+    }
+    
     {   // ============= TEMP ============= //
         // Example of moving a sector by floor height
         // Left mouse means a positive addition
@@ -358,29 +369,31 @@ void update()
                     vec2(1, 1), 
                     "blood_splat", 
                     decal_t::WALL, 
-                    hit_wall->id
+                    hit_wall->id,
+                    67
                 );
                 decal = map_data->get_decal(sample_decal);
-                decal->tag_id = 67;
-                tags->addTagClient(decal);
+                map_data->tag_resolver->addTagClient(*decal);
 
                 // Attempt to create a connection between 67 and 69;
-                tags->addTagConnection(67, 69, [](UPTR aptr, UPTR bptr, U8 from) -> void {
+                map_data->tag_resolver->addTagConnection(decal->tag_id, map_data->get_sector(1)->tag_id, 
+                    [&](UPTR aptr, UPTR bptr, U8 from) -> void 
+                {
                     if (from == 1) {
                         // Modify Sector1 floor height
-                        decal_t  *a = reinterpret_cast<decal_t*>(aptr);
-                        sector_t *b = reinterpret_cast<sector_t*>(bptr);
+                        decal_t  *a = tag_ptr_cast<decal_t>(aptr);
+                        sector_t *b = tag_ptr_cast<sector_t>(bptr);
 
                         if (from == GZ_TAG_CB_SOURCE_A) {
-                            if (b->floor_height <= b->ceil_height) {
-                                b->floor_height += 0.01f;
+                            GZ_LOG(GZ_WARNING, "A is Modified %f", b->ceil_height);
+                            if (b->ceil_height > b->floor_height) {
+                                map_data->set_sector_ceil(b->id, -0.01f, true);
                             }
                             else {
                                 // Stop operation
                                 a->tag_isModified = false;
                             }
                         }
-
                         b->tag_isModified = false;
                     }
                 });
@@ -523,8 +536,8 @@ int main()
             RaiiTimer<SECONDS> rt(&physics_update_time);
             physics.update(*entities, *resource->get<GeezMapData>(current_map), delta_time);
         }
+        resource->get<GeezMapData>(current_map)->tag_resolver->resolve_all_tag();
         post_update();
-        tags->resolve_all_tag();
         {
             RaiiTimer<SECONDS> rt(&render_time);
             render();

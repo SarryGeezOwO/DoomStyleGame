@@ -1,7 +1,26 @@
 #include "tag.hpp"
 #include "util/log.hpp"
+#include "util/utility.hpp"
 
 namespace Geez {
+
+    #define X(name) #name,
+    static const char* const trigger_names[] = { TRIGGER_LIST };
+    static const char* const action_names[]  = { ACTION_LIST };
+    #undef X
+
+    namespace Internal {
+        const char* to_string(TagTrigger t) {
+            return (t < std::size(trigger_names)) ? trigger_names[t] : "INVALID_TRIGGER";
+        }
+
+        const char* to_string(TagAction a) {
+            return (a < std::size(action_names)) ? action_names[a] : "INVALID_ACTION";
+        }
+
+        bool to_enum(const char* name, TagTrigger& trigger) { return lookup(name, trigger_names, trigger); }
+        bool to_enum(const char* name, TagAction&  action)  { return lookup(name, action_names,  action);  }
+    }
 
     Tag *TagSystem::get_tag(U16 tag_id) {
         return (tags.find(tag_id) != tags.end() ? &tags.at(tag_id) : nullptr);
@@ -39,117 +58,98 @@ namespace Geez {
 
     void TagSystem::process_pending() {
         if (pending.empty()) {
-            processing = false;
             return;
         }
 
         TagConnection con = pending.front();
-        pending.pop();
-
         Tag *t = get_tag(con.to);
-        if (!t) {
-            processing = false; // Force next pending
-            return;
+
+        if (t) {
+            // True means action is done
+            if (TagEvaluator::act(con.action, t->owner)) {
+                pending.pop();
+                GZ_LOG(GZ_SUCCESS, "Action completed... doingNext action");
+            }
         }
-            
-        TagEvaluator::act(con.action, t->owner);
-    }
-
-
-
-
-    void TagEvaluator::act(TagAction action, const void *owner) {
-        switch (action)
-        {
-        case TagAction::SECTOR_CLOSE:
-        case TagAction::SECTOR_LIFT:
-            action_for_sector(action, reinterpret_cast<const sector_t*>(owner));
-            break;
-        
-        default: break;
+        else {
+            pending.pop();
+            GZ_LOG(GZ_FAIL, "NULL Tag, process_pending()...");
         }
     }
-
-    bool TagEvaluator::met(TagTrigger trigger, const void *owner) {
-        switch (trigger)
-        {
-        case TagTrigger::SECTOR_CLOSED:
-        case TagTrigger::SECTOR_LIFTED:
-        case TagTrigger::SECTOR_STAND:
-            return condition_for_sector(trigger, reinterpret_cast<const sector_t*>(owner));
-
-        case TagTrigger::WALL_ACTION:
-        case TagTrigger::WALL_PASS:
-            return condition_for_wall(trigger, reinterpret_cast<const wall_t*>(owner));
-
-        default: break;
-        }
-
-        return false;
-    }
-
-
-    // ============= TRIGGERS ============= //
 
 
     #define EVAL_SYS TagEvaluator::required_subsystems
-
-    bool wall_condition_action(const wall_t *wall) {
-        return EVAL_SYS.events->check_key(SDLK_T, InputState::GZ_TAP);
-    }
-
-    bool wall_condition_pass(const wall_t *wall) {
-        return false;
-    }
-    
-    bool TagEvaluator::condition_for_wall(TagTrigger trigger, const wall_t *wall) {
-        switch (trigger)
-        {
-        case TagTrigger::WALL_ACTION:   return wall_condition_action(wall);
-        case TagTrigger::WALL_PASS:     return wall_condition_pass(wall);
-        default: break;
-        }
-        return false;
-    }
-
-
-
-
-
-    bool TagEvaluator::condition_for_sector(TagTrigger trigger, const sector_t *sector) {
-        return false;
-    }
-
-    
-
     // ============= ACTIONS ============= //
-    
-    
- 
-    
-    void TagEvaluator::action_for_wall(TagAction action, const wall_t *wall) {
+
+    bool action_NO_ACTION(void *owner) { return true; }
+
+    bool action_SECTOR_CLOSE(void *owner) {
+        sector_t *sector = reinterpret_cast<sector_t*>(owner);
+        if (sector->ceil_height > sector->floor_height) 
+            sector->ceil_height -= 0.01f;
+        return (sector->ceil_height <= sector->floor_height);
     }
 
-
-
-
-    void sector_action_close(const sector_t *sector) {
-        GZ_LOG(GZ_DEBUG, "Sector [%d] Closed or someshi", sector->id);
+    bool action_SECTOR_LIFT(void *owner) {
+        sector_t *sector = reinterpret_cast<sector_t*>(owner);
+        if (sector->floor_height < sector->ceil_height) 
+            sector->floor_height += 0.01f;
+        return (sector->floor_height >= sector->ceil_height);
     }
 
-    void sector_action_lift(const sector_t *sector) {
-        GZ_LOG(GZ_DEBUG, "Sector [%d] lifted or someshi", sector->id);
+    bool action_SECTOR_OPEN(void *owner) {
+        sector_t *sector = reinterpret_cast<sector_t*>(owner);
+        F32 gap = abs(sector->ceil_height - sector->floor_height);
+        if (gap < sector->drstp_open) 
+            sector->ceil_height += 0.01f;
+        return (gap >= sector->drstp_open);
     }
 
-    void TagEvaluator::action_for_sector(TagAction action, const sector_t *sector) {
+    bool TagEvaluator::act(TagAction action, void *owner) {
+        #define X(name) case TagAction::name: return action_##name(owner);
         switch (action)
         {
-        case TagAction::SECTOR_CLOSE: sector_action_close(sector); break;
-        case TagAction::SECTOR_LIFT:  sector_action_lift(sector); break;
-        
-        default:
-            break;
+            ACTION_LIST
+            default: return true;
         }
+        #undef X
+    }
+
+    // ============= ---END--- ============= //
+
+    // ============= TRIGGERS ============= //
+
+    bool trigger_NO_TRIGGER(const void *owner) { return false; }
+
+    bool trigger_SECTOR_CLOSED(const void *owner) { 
+        return false;
+    }
+
+    bool trigger_SECTOR_LIFTED(const void *owner) { 
+        return false; 
+    }
+
+    bool trigger_SECTOR_STAND(const void *owner) { 
+        return false; 
+    }
+
+    bool trigger_WALL_ACTION(const void *owner) { 
+        return EVAL_SYS.events->check_key(SDLK_T, InputState::GZ_TAP);
     }
     
+    bool trigger_WALL_PASS(const void *owner) { 
+        return EVAL_SYS.events->check_key(SDLK_Y, InputState::GZ_TAP);
+    }
+
+    bool TagEvaluator::met(TagTrigger trigger, const void *owner) {
+        #define X(name) case TagTrigger::name: return trigger_##name(owner);
+        switch (trigger)
+        {
+            TRIGGER_LIST
+            default: return false;
+        }
+        #undef X
+    }
+
+    // ============= ---END--- ============= //
 }

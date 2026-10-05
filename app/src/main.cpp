@@ -241,6 +241,7 @@ void start()
 
     if (check == 2) {
         tags->connect(100, 200, TagTrigger::WALL_ACTION, TagAction::SECTOR_CLOSE);
+        tags->connect(100, 200, TagTrigger::WALL_PASS, TagAction::SECTOR_OPEN);
     }
 }
 

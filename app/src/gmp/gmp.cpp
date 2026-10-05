@@ -112,6 +112,8 @@ namespace Geez {
                 sector.is_interior          = static_cast<bool>(values[4]);
                 sector.texture_id_floor = texture_references[static_cast<U32>(values[5])];
                 sector.texture_id_ceil  = texture_references[static_cast<U32>(values[6])];
+                sector.drstp_close      = 0.0f;
+                sector.drstp_open       = 0.75f;
 
                 for (U32 i = 0; i < wall_count; i++){
                     U32 wall_id = static_cast<U32>(values[i+7]);

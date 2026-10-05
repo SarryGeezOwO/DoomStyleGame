@@ -4,6 +4,7 @@
 #include <SDL3/SDL_filesystem.h>
 #include <filesystem>
 #include <algorithm>
+#include <iterator>
 
 namespace Geez
 {
@@ -83,5 +84,18 @@ namespace Geez
 
     inline bool number_in_range(F32 x, F32 min, F32 max) {
         return (x == std::clamp(x, min, max));
+    }
+
+    // Lineear scan, Not good for iterative calls
+    template <typename Enum, size_t N>
+    bool lookup(const char* name, const char* const (&names)[N], Enum& out) {
+        if (!name) return false;
+        for (size_t i = 0; i < N; ++i) {
+            if (std::string(name) == std::string(names[i])) {
+                out = static_cast<Enum>(i);
+                return true;
+            }
+        }
+        return false;
     }
 }

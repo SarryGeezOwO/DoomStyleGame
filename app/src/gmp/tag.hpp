@@ -18,24 +18,35 @@ namespace Geez {
     // Tag Operation Types
     // TAG_EVENT_*  can act as both Input and Output for a TagConnection
 
+    #define TRIGGER_LIST \
+        X(NO_TRIGGER) \
+        X(SECTOR_CLOSED)    /*After Sector finished closing*/ \
+        X(SECTOR_LIFTED)    /*After Sector finished lifting*/ \
+        X(SECTOR_STAND)     /*Player present inside the sector*/ \
+        X(WALL_ACTION)      /*Player Action button*/ \
+        X(WALL_PASS)        /*Player walkthrough portal in any direction*/
+
+    #define X(name) name,
     enum TagTrigger : U8 {
-        NO_TRIGGER,               
-        SECTOR_CLOSED,      // After Sector finished closing
-        SECTOR_LIFTED,      // After Sector finished lifting
-        SECTOR_STAND,       // Player present inside the sector
-        WALL_ACTION,        // Player Action button
-        WALL_PASS           // Player walkthrough portal in any direction
+        TRIGGER_LIST
+    };
+    #undef X
+
+    #define ACTION_LIST \
+        X(NO_ACTION) \
+        X(SECTOR_CLOSE)   /*CeilHeight -> FloorHeight*/ \
+        X(SECTOR_LIFT)    /*FloorHeight -> CeilHeight*/ \
+        X(SECTOR_OPEN)    /*Creates a gap between floor and ceil by drstp_open*/
+
+    #define X(name) name,
+    enum TagAction : U8 {
+        ACTION_LIST
     };
 
-    enum TagAction : U8 {
-        NO_ACTION,
-        SECTOR_CLOSE,       // CeilHeight -> FloorHeight
-        SECTOR_LIFT         // FloorHeight -> CeilHeight
-    };
+    #undef X
     
     // These are special gates that bypasses input and output flags
     // like locking out the event until later on the story
-
     #define GZ_GMP_TAG_FLAG_NON_INTERACTABLE = 0x0001
     
     struct TagEvaluator {    
@@ -43,8 +54,8 @@ namespace Geez {
         static bool condition_for_wall(TagTrigger trigger, const wall_t *wall);
         static bool condition_for_sector(TagTrigger trigger, const sector_t* sector);
 
-        static void action_for_wall(TagAction action, const wall_t *wall);
-        static void action_for_sector(TagAction action, const sector_t *sector);
+        static bool action_for_wall(TagAction action, wall_t *wall);
+        static bool action_for_sector(TagAction action, sector_t *sector);
     
     public:
         struct RequiredSubSystems_t {
@@ -55,7 +66,7 @@ namespace Geez {
             nullptr
         };
         
-        static void act(TagAction action, const void *owner);
+        static bool act(TagAction action, void *owner);
         static bool met(TagTrigger trigger, const void *owner);    
     };
 

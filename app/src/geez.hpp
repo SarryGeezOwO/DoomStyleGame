@@ -51,6 +51,7 @@ Don't judge me pls 💔💔💔
 // GMP
 #include "gmp/gmp_types.hpp"
 #include "gmp/gmp.hpp"
+#include "gmp/tag.hpp"
 
 // Resource
 #include "resource/resource.hpp"

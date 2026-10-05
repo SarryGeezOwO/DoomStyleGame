@@ -54,7 +54,7 @@ static std::unique_ptr<ResourceManager> resource;
 static std::unique_ptr<GameObjectManager> entities;
 static std::unique_ptr<MeshManager> meshes;
 static std::unique_ptr<Renderer> renderer;
-static std::unique_ptr<TagResolver> tags;
+static std::unique_ptr<TagSystem> tags;
 static Camera camera(WORLD_UP);
 static Input input{};
 static PhysicsSystem physics{};
@@ -143,10 +143,10 @@ void init() {
     // Sub Systems
     window->set_cursor_visible(false);
     renderer  = std::make_unique<Renderer>();
+    tags      = std::make_unique<TagSystem>();
     audio     = std::make_unique<AudioPlayer>(MAX_MIXER_CHANNEL);
     entities  = std::make_unique<GameObjectManager>();
     resource  = std::make_unique<ResourceManager>();
-    tags      = std::make_unique<TagResolver>();
     meshes    = std::make_unique<MeshManager>(
         std::vector<Internal::PrimitveMesh>{
             Internal::QUAD,
@@ -168,6 +168,8 @@ void init() {
     resource->set_watch_interval(500);
     resource->start_watching();
 
+    TagEvaluator::required_subsystems.events = &input;
+
     camera.perspective();
     camera.position.y+=0.5f;
     camera.position.z+=1.5f;
@@ -183,6 +185,7 @@ void onQuit()
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();
 
+    tags.reset();
     renderer.reset();
     entities.reset();
     resource.reset();
@@ -190,7 +193,6 @@ void onQuit()
     window.reset();
     audio.reset();
     config.reset();
-    tags.reset();
 
     GZ_Audio_Quit();
     SDL_Quit();
@@ -225,9 +227,20 @@ void start()
     shu->scale = vec3(0.5f, 0.5f, 1.0f);
     shu->position = vec3(c.x, 0.25f, c.y);
 
+    // Tag Testing
+    I32 check = 0;
+    if (map_data->get_wall(1) != nullptr) {
+        tags->register_tag(100, map_data->get_wall(1));
+        check++;
+    }
+
     if (map_data->get_sector(1) != nullptr) {
-        map_data->get_sector(1)->tag_id = 69;
-        tags->addTagClient(map_data->get_sector(1));
+        tags->register_tag(200, map_data->get_sector(1));
+        check++;
+    }
+
+    if (check == 2) {
+        tags->connect(100, 200, TagTrigger::WALL_ACTION, TagAction::SECTOR_CLOSE);
     }
 }
 
@@ -323,10 +336,6 @@ void update()
         }
     }
 
-    if (input.check_key(SDLK_H, GZ_TAP)) {
-        GeezMapData::Event::interact_decal(map_data->get_decal(sample_decal));
-    }
-
     {   // ============= TEMP ============= //
         // Example of moving a sector by floor height
         // Left mouse means a positive addition
@@ -361,29 +370,6 @@ void update()
                     hit_wall->id
                 );
                 decal = map_data->get_decal(sample_decal);
-                decal->tag_id = 67;
-                tags->addTagClient(decal);
-
-                // Attempt to create a connection between 67 and 69;
-                tags->addTagConnection(67, 69, [](UPTR aptr, UPTR bptr, U8 from) -> void {
-                    if (from == 1) {
-                        // Modify Sector1 floor height
-                        decal_t  *a = reinterpret_cast<decal_t*>(aptr);
-                        sector_t *b = reinterpret_cast<sector_t*>(bptr);
-
-                        if (from == GZ_TAG_CB_SOURCE_A) {
-                            if (b->floor_height <= b->ceil_height) {
-                                b->floor_height += 0.01f;
-                            }
-                            else {
-                                // Stop operation
-                                a->tag_isModified = false;
-                            }
-                        }
-
-                        b->tag_isModified = false;
-                    }
-                });
             }
 
             // Update
@@ -514,6 +500,7 @@ int main()
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
+        tags->update();
         camera.update();
         {
             RaiiTimer<SECONDS> rt(&update_time);
@@ -523,8 +510,8 @@ int main()
             RaiiTimer<SECONDS> rt(&physics_update_time);
             physics.update(*entities, *resource->get<GeezMapData>(current_map), delta_time);
         }
+        tags->process_pending();
         post_update();
-        tags->resolve_all_tag();
         {
             RaiiTimer<SECONDS> rt(&render_time);
             render();

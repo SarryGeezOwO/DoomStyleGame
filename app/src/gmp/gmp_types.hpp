@@ -13,24 +13,11 @@
 
 namespace Geez
 {
-    #define GZ_TAG_CB_SOURCE_NONE 0
-    #define GZ_TAG_CB_SOURCE_A 1
-    #define GZ_TAG_CB_SOURCE_B 2
-    #define GZ_TAG_CB_SOURCE_BOTH 3
-
-    #define GZ_GMP_TYPE_FLAG_INTERACTABLE = 0x0001 
-
-    struct ITagClient {
-        UPTR ptr            = reinterpret_cast<UPTR>(this);
-        U32  tag_id         = 0;
-        bool tag_isModified = 0; // a callback is expected and will reset to false after action
-    };
-
     using Point_t = std::array<F32, 2>;
     using Polygon_t = std::vector<Point_t>;
     // Haha, batman, you cannnot stop me from writing bad code 🗿🗿
 
-    struct decal_t : ITagClient {
+    struct decal_t {
         U32 id;
         glm::vec3 position;
         glm::vec3 normal;
@@ -46,7 +33,7 @@ namespace Geez
         U32 target_id;
     };
 
-    struct wall_t : ITagClient {
+    struct wall_t {
         U32 id;
         Point_t point_a;
         Point_t point_b;
@@ -73,7 +60,7 @@ namespace Geez
         std::array<glm::vec3, 2> m_normal = {};
     };
 
-    struct sector_t : ITagClient {
+    struct sector_t {
         U32 id;
         F32 floor_height;                           // Floor...
         F32 ceil_height;                            // Not relative to the floor_height
